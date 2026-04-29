@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <DebugType>full</DebugType>
+        <DebugSymbols>true</DebugSymbols>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="NSwag.CodeGeneration.TypeScript" Version="14.6.3" />
+        <PackageReference Include="Scalar.AspNetCore" Version="2.12.54" />
+        <ProjectReference Include="..\Api.Rest\Api.Rest.csproj"/>
+        <ProjectReference Include="..\Infrastructure.Postgres\Infrastructure.Postgres.csproj"/>
+        <ProjectReference Include="..\Application\Application.csproj"/>
+        <PackageReference Include="NSwag.AspNetCore" Version="14.2.0"/>
+    </ItemGroup>
+
+
+</Project>
