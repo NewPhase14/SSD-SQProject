@@ -1,12 +1,79 @@
-CREATE TABLE "user" (
-    id text NOT NULL,
-    email text NOT NULL,
-    hash text NOT NULL,
-    salt text NOT NULL,
-    role text NOT NULL,
-    CONSTRAINT user_pkey PRIMARY KEY (id)
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE users (
+                       id TEXT PRIMARY KEY,
+                       name TEXT NOT NULL,
+                       email TEXT NOT NULL,
+                       password_hash TEXT NOT NULL,
+                       password_salt TEXT NOT NULL,
+                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE categories (
+                            id TEXT PRIMARY KEY DEFAULT uuid_generate_v4(),
+                            name TEXT NOT NULL
+);
+
+CREATE TABLE listings (
+                          id TEXT PRIMARY KEY,
+                          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                          category_id TEXT REFERENCES categories(id),
+                          condition VARCHAR(30) NOT NULL,
+                          title VARCHAR(255) NOT NULL,
+                          description TEXT NOT NULL,
+                          price DECIMAL(10,2) NOT NULL,
+                          status VARCHAR(30) NOT NULL,
+                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
+CREATE TABLE images (
+                        id TEXT PRIMARY KEY,
+                        image_path TEXT NOT NULL,
+                        listing_id TEXT NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-
+INSERT INTO categories (name) VALUES
+                                  ('Cars'),
+                                  ('Motorcycles'),
+                                  ('Scooters'),
+                                  ('Bicycles'),
+                                  ('Electronics'),
+                                  ('Mobile Phones'),
+                                  ('Computers'),
+                                  ('Tablets'),
+                                  ('TV & Audio'),
+                                  ('Cameras'),
+                                  ('Gaming'),
+                                  ('Game Consoles'),
+                                  ('Smartwatches'),
+                                  ('Home'),
+                                  ('Furniture'),
+                                  ('Lighting'),
+                                  ('Kitchen Equipment'),
+                                  ('Clothing'),
+                                  ('Men Clothing'),
+                                  ('Women Clothing'),
+                                  ('Children Clothing'),
+                                  ('Shoes'),
+                                  ('Bags'),
+                                  ('Jewelry'),
+                                  ('Accessories'),
+                                  ('Sports'),
+                                  ('Fitness'),
+                                  ('Outdoor'),
+                                  ('Camping'),
+                                  ('Books'),
+                                  ('Music'),
+                                  ('Movies'),
+                                  ('Toys'),
+                                  ('Garden'),
+                                  ('Tools'),
+                                  ('Pets'),
+                                  ('Health'),
+                                  ('Beauty'),
+                                  ('Office Equipment'),
+                                  ('Musical Instruments'),
+                                  ('Other');

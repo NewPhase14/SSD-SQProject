@@ -49,7 +49,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AuthRequestDto"
+                "$ref": "#/components/schemas/RegisterRequestDto"
               }
             }
           },
@@ -122,6 +122,29 @@
           "password": {
             "type": "string",
             "minLength": 4
+          }
+        }
+      },
+      "RegisterRequestDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "email",
+          "password",
+          "name"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "minLength": 3
+          },
+          "password": {
+            "type": "string",
+            "minLength": 4
+          },
+          "name": {
+            "type": "string",
+            "minLength": 3
           }
         }
       }

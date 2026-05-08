@@ -11,8 +11,7 @@ public class AuthController(ISecurityService securityService) : ControllerBase
     public const string ControllerRoute = "api/auth/";
 
     public const string LoginRoute = ControllerRoute + nameof(Login);
-
-
+    
     public const string RegisterRoute = ControllerRoute + nameof(Register);
 
 
@@ -28,7 +27,7 @@ public class AuthController(ISecurityService securityService) : ControllerBase
 
     [Route(RegisterRoute)]
     [HttpPost]
-    public ActionResult<AuthResponseDto> Register([FromBody] AuthRequestDto dto)
+    public ActionResult<AuthResponseDto> Register([FromBody] RegisterRequestDto dto)
     {
         return Ok(securityService.Register(dto));
     }
