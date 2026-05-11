@@ -9,7 +9,7 @@ public partial class Listing
 
     public string UserId { get; set; } = null!;
 
-    public string? CategoryId { get; set; }
+    public string CategoryId { get; set; } = null!;
 
     public string Condition { get; set; } = null!;
 
@@ -25,7 +25,9 @@ public partial class Listing
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual Category? Category { get; set; }
+    public virtual Category Category { get; set; } = null!;
+
+    public virtual ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();
 
     public virtual ICollection<Image> Images { get; set; } = new List<Image>();
 

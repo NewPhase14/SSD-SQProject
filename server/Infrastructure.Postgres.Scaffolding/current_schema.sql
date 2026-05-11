@@ -1,4 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+SET TIME ZONE 'CET';
 
 CREATE TABLE users (
                        id TEXT PRIMARY KEY,
@@ -6,25 +7,25 @@ CREATE TABLE users (
                        email TEXT NOT NULL,
                        password_hash TEXT NOT NULL,
                        password_salt TEXT NOT NULL,
-                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE categories (
-                            id TEXT PRIMARY KEY DEFAULT uuid_generate_v4(),
-                            name TEXT NOT NULL
+                        id TEXT PRIMARY KEY DEFAULT uuid_generate_v4(),
+                        name TEXT NOT NULL
 );
 
 CREATE TABLE listings (
                           id TEXT PRIMARY KEY,
                           user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                          category_id TEXT REFERENCES categories(id),
+                          category_id TEXT NOT NULL REFERENCES categories(id),
                           condition VARCHAR(30) NOT NULL,
                           title VARCHAR(255) NOT NULL,
                           description TEXT NOT NULL,
                           price DECIMAL(10,2) NOT NULL,
                           status VARCHAR(30) NOT NULL,
-                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -32,7 +33,26 @@ CREATE TABLE images (
                         id TEXT PRIMARY KEY,
                         image_path TEXT NOT NULL,
                         listing_id TEXT NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE conversations (
+                               id TEXT PRIMARY KEY,
+                               listing_id TEXT NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
+                               buyer_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                               seller_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                               created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                               UNIQUE(listing_id, buyer_user_id, seller_user_id)
+);
+
+CREATE TABLE messages (
+                          id TEXT PRIMARY KEY,
+                          conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+                          sender_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                          ciphertext BYTEA NOT NULL,
+                          nonce BYTEA NOT NULL,
+                          tag BYTEA NOT NULL,
+                          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 INSERT INTO categories (name) VALUES

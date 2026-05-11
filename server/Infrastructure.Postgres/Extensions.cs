@@ -19,6 +19,8 @@ public static class Extensions
             options.EnableSensitiveDataLogging();
         });
 
+        services.AddScoped<IMessageRepo, MessageRepo>();
+        services.AddScoped<IConversationRepo, ConversationRepo>();
         services.AddScoped<IDataRepository, Repo>();
 
         return services;
