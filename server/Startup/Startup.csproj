@@ -13,7 +13,7 @@
         <ProjectReference Include="..\Api.Rest\Api.Rest.csproj"/>
         <ProjectReference Include="..\Infrastructure.Postgres\Infrastructure.Postgres.csproj"/>
         <ProjectReference Include="..\Application\Application.csproj"/>
-        <PackageReference Include="NSwag.AspNetCore" Version="14.2.0"/>
+        <PackageReference Include="NSwag.AspNetCore" Version="14.7.1" />
     </ItemGroup>
 
 

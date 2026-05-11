@@ -1,4 +1,5 @@
 using Application.Interfaces;
+using Application.Interfaces.Infrastructure.Postgres;
 using Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,6 +14,7 @@ public static class Extensions
         services.AddScoped<ICryptoService, CryptoService>();
         services.AddScoped<ISecurityService, SecurityService>();
         services.AddScoped<IServiceLogic, ServiceLogic>();
+        services.AddScoped<IListingService, ListingService>();
         return services;
     }
 }
