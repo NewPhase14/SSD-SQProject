@@ -46,7 +46,9 @@ public partial class MyDbContext : DbContext
 
             entity.ToTable("conversations");
 
-            entity.HasIndex(e => new { e.ListingId, e.BuyerUserId, e.SellerUserId }, "conversations_listing_id_buyer_user_id_seller_user_id_key").IsUnique();
+            entity.HasIndex(e => new { e.ListingId, e.BuyerUserId }, "conversations_listing_id_buyer_user_id_key").IsUnique();
+
+            entity.HasIndex(e => new { e.ListingId, e.BuyerUserId }, "idx_conversations_listing_buyer");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.BuyerUserId).HasColumnName("buyer_user_id");
@@ -54,19 +56,14 @@ public partial class MyDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnName("created_at");
             entity.Property(e => e.ListingId).HasColumnName("listing_id");
-            entity.Property(e => e.SellerUserId).HasColumnName("seller_user_id");
 
-            entity.HasOne(d => d.BuyerUser).WithMany(p => p.ConversationBuyerUsers)
+            entity.HasOne(d => d.BuyerUser).WithMany(p => p.Conversations)
                 .HasForeignKey(d => d.BuyerUserId)
                 .HasConstraintName("conversations_buyer_user_id_fkey");
 
             entity.HasOne(d => d.Listing).WithMany(p => p.Conversations)
                 .HasForeignKey(d => d.ListingId)
                 .HasConstraintName("conversations_listing_id_fkey");
-
-            entity.HasOne(d => d.SellerUser).WithMany(p => p.ConversationSellerUsers)
-                .HasForeignKey(d => d.SellerUserId)
-                .HasConstraintName("conversations_seller_user_id_fkey");
         });
 
         modelBuilder.Entity<Image>(entity =>
@@ -131,6 +128,8 @@ public partial class MyDbContext : DbContext
             entity.HasKey(e => e.Id).HasName("messages_pkey");
 
             entity.ToTable("messages");
+
+            entity.HasIndex(e => new { e.ConversationId, e.CreatedAt }, "idx_messages_conversation_created");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Ciphertext).HasColumnName("ciphertext");

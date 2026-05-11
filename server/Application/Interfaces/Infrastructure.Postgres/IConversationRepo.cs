@@ -6,10 +6,9 @@ public interface IConversationRepo
 {
     Task<Conversation?> GetAsync(string conversationId);
 
-    Task<Conversation?> GetByListingAndUsersAsync(
+    Task<Conversation?> GetByListingAndBuyerAsync(
         string listingId,
-        string buyerUserId,
-        string sellerUserId);
+        string buyerUserId);
 
     Task<Conversation> CreateAsync(Conversation conversation);
 }

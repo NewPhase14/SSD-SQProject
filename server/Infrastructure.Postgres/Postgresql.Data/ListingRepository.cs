@@ -64,4 +64,10 @@ public class ListingRepository(MyDbContext ctx) : IListingRepository
         await ctx.SaveChangesAsync();
         return images;
     }
+
+    public async Task<string?> GetSellerIdAsync(string listingId)
+    {
+        var sellerId = await ctx.Listings.Where(l => l.Id == listingId).Select(l => l.UserId).FirstOrDefaultAsync();
+        return sellerId;
+    }
 }

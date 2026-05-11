@@ -1,30 +1,51 @@
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
+using Application.Models.Dtos.Conversations;
 using Core.Domain.Entities;
 
 namespace Application.Services;
 
-public class ConversationService(IConversationRepo conversationRepo) : IConversationService
+public class ConversationService(IConversationRepo conversationRepo, IListingRepository listingRepo) : IConversationService
 {
-    public async Task<Conversation> GetOrCreateConversationAsync(string listingId, string buyerUserId,
-        string sellerUserId)
+    public async Task<ConversationResponseDto> GetOrCreateConversationAsync(CreateConversationRequestDto dto, string userId)
     {
-        var existingConversation =
-            conversationRepo.GetByListingAndUsersAsync(listingId, buyerUserId, sellerUserId).Result;
+        var listingSellerId = await listingRepo.GetSellerIdAsync(dto.ListingId);
+        
+        if (listingSellerId == null)
+            throw new Exception("Listing not found");
+        
+        if (listingSellerId == userId)
+            throw new InvalidOperationException("Cannot create conversation with own listing");
+        
+        var existingConversation = await 
+            conversationRepo.GetByListingAndBuyerAsync(dto.ListingId, userId);
 
         if (existingConversation != null)
         {
-            return existingConversation;
+            return new ConversationResponseDto()
+            {
+                Id = existingConversation.Id,
+                ListingId = existingConversation.ListingId,
+                BuyerUserId = existingConversation.BuyerUserId,
+                SellerUserId = listingSellerId,
+            };
         }
 
         var conversation = new Conversation
         {
             Id = Guid.NewGuid().ToString(),
-            ListingId = listingId,
-            BuyerUserId = buyerUserId,
-            SellerUserId = sellerUserId,
+            ListingId = dto.ListingId,
+            BuyerUserId = userId,
         };
 
-        return await conversationRepo.CreateAsync(conversation);
+        var newConversation = await conversationRepo.CreateAsync(conversation);
+        
+        return new ConversationResponseDto()
+        {
+            Id = newConversation.Id,
+            ListingId = newConversation.ListingId,
+            BuyerUserId = newConversation.BuyerUserId,
+            SellerUserId = listingSellerId,
+        };
     }
 }
