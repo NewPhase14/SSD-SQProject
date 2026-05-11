@@ -20,6 +20,7 @@ public static class Extensions
         });
 
         services.AddScoped<IDataRepository, Repo>();
+        services.AddScoped<IListingRepository, ListingRepository>();
 
         return services;
     }

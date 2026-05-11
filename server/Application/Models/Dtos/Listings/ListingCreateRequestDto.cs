@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Core.Domain.Entities;
 
 namespace Application.Models.Dtos;
 
@@ -25,4 +26,7 @@ public class ListingCreateRequestDto
 
     [Required]
     public string Status { get; set; } = null!;
+
+    [Required] 
+    public List<string> ImagePaths { get; set; } = null!;
 }

@@ -18,7 +18,9 @@ public class ListingRepository(MyDbContext ctx) : IListingRepository
     public async Task<Listing> UpdateListing(Listing listing)
     {
         var existingListing = await ctx.Listings.FirstOrDefaultAsync(l => l.Id == listing.Id);
-        
+        if (existingListing == null)
+            throw new InvalidOperationException("Listing not found");
+
         existingListing.CategoryId = listing.CategoryId;
         existingListing.Condition = listing.Condition;
         existingListing.Title = listing.Title;
@@ -26,24 +28,40 @@ public class ListingRepository(MyDbContext ctx) : IListingRepository
         existingListing.Price = listing.Price;
         existingListing.Status = listing.Status;
         existingListing.UpdatedAt = DateTime.UtcNow;
-        
+
         var updatedListing = ctx.Listings.Update(existingListing);
         await ctx.SaveChangesAsync();
         return updatedListing.Entity;
     }
 
-    public Task<List<Listing>> GetAllListings()
+    public async Task<List<Listing>> GetAllListings()
     {
-        throw new NotImplementedException();
+        var listings = await ctx.Listings.ToListAsync();
+        return listings;
     }
 
-    public Task<Listing> GetListingByUserId(string id)
+    public async Task<List<Listing>> GetListingByUserId(string id)
     {
-        throw new NotImplementedException();
+        var listing = await ctx.Listings.Where(l => l.UserId == id).ToListAsync();
+        if (listing.Count == 0)
+            throw new InvalidOperationException("No listings found");
+        return listing;
     }
 
-    public Task<Listing> DeleteListing(string id)
+    public async Task<Listing> DeleteListing(string id)
     {
-        throw new NotImplementedException();
+        var listing = await ctx.Listings.FirstOrDefaultAsync(l => l.Id == id);
+        if (listing == null)
+            throw new InvalidOperationException("Listing not found");
+        ctx.Remove(listing);
+        await ctx.SaveChangesAsync();
+        return listing;
+    }
+
+    public async Task<List<Image>> AddImages(List<Image> images)
+    {
+        await ctx.Images.AddRangeAsync(images);
+        await ctx.SaveChangesAsync();
+        return images;
     }
 }

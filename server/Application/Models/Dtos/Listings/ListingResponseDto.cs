@@ -10,6 +10,7 @@ public class ListingResponseDto
     public string Description { get; set; } = null!;
     public decimal Price { get; set; }
     public string Status { get; set; } = null!;
+    public List<string> ImagePaths { get; set; } = new();
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }
