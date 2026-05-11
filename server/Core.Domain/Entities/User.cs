@@ -17,5 +17,11 @@ public partial class User
 
     public DateTime? CreatedAt { get; set; }
 
+    public virtual ICollection<Conversation> ConversationBuyerUsers { get; set; } = new List<Conversation>();
+
+    public virtual ICollection<Conversation> ConversationSellerUsers { get; set; } = new List<Conversation>();
+
     public virtual ICollection<Listing> Listings { get; set; } = new List<Listing>();
+
+    public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
 }

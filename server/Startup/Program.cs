@@ -21,6 +21,7 @@ public class Program
     public static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         var appOptions = services.AddAppOptions(configuration);
+        var encryption = services.AddEncryption(configuration);
 
         services.RegisterApplicationServices();
 

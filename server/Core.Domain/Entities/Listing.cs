@@ -27,6 +27,8 @@ public partial class Listing
 
     public virtual Category Category { get; set; } = null!;
 
+    public virtual ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();
+
     public virtual ICollection<Image> Images { get; set; } = new List<Image>();
 
     public virtual User User { get; set; } = null!;
