@@ -1,5 +1,5 @@
 using Application.Interfaces;
-using Application.Models.Dtos;
+using Application.Models.Dtos.Messages;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Rest.Controllers;
@@ -24,7 +24,7 @@ public class MessageController(IMessageService messageService, ISecurityService 
 
     [HttpPost]
     [Route(SendMessageRoute)]
-    public async Task<IActionResult> SendMessage([FromBody]SendMessageRequestDto dto, [FromHeader] string authorization)
+    public async Task<IActionResult> SendMessage([FromBody]MessageSendRequestDto dto, [FromHeader] string authorization)
     {
         var jwt = securityService.VerifyJwtOrThrow(authorization);
         await messageService.SendMessageAsync(dto, jwt.Id);

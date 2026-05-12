@@ -1,6 +1,6 @@
-namespace Application.Models.Dtos;
+namespace Application.Models.Dtos.Messages;
 
-public class SendMessageRequestDto
+public class MessageSendRequestDto
 {
     public string ConversationId { get; set; } = null!;
 

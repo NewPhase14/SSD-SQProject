@@ -1,10 +1,10 @@
-using Application.Models.Dtos;
+using Application.Models.Dtos.Messages;
 
 namespace Application.Interfaces;
 
 public interface IMessageService
 {
-    public Task SendMessageAsync(SendMessageRequestDto dto, string userId);
+    public Task SendMessageAsync(MessageSendRequestDto dto, string userId);
 
     public Task<List<MessageResponseDto>> GetMessagesAsync(string conversationId, string userId);
     

@@ -5,9 +5,9 @@ using Core.Domain.Entities;
 
 namespace Application.Services;
 
-public class ConversationService(IConversationRepo conversationRepo, IListingRepository listingRepo) : IConversationService
+public class ConversationService(IConversationRepo conversationRepo, IListingRepo listingRepo) : IConversationService
 {
-    public async Task<ConversationResponseDto> GetOrCreateConversationAsync(CreateConversationRequestDto dto, string userId)
+    public async Task<ConversationResponseDto> GetOrCreateConversationAsync(ConversationCreateRequestDto dto, string userId)
     {
         var listingSellerId = await listingRepo.GetSellerIdAsync(dto.ListingId);
         

@@ -1,7 +1,9 @@
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Services;
+using Application.Validators.Auth;
 using Application.Validators.Conversations;
+using Application.Validators.Listings;
 using Application.Validators.Messages;
 using FluentValidation;
 using FluentValidation.AspNetCore;
@@ -17,14 +19,17 @@ public static class Extensions
         services.AddScoped<IConversationService, ConversationService>();
         services.AddScoped<ICryptoService, CryptoService>();
         services.AddScoped<ISecurityService, SecurityService>();
-        services.AddScoped<IServiceLogic, ServiceLogic>();
         services.AddScoped<IListingService, ListingService>();
         
         
-        //Validatiors
+        //Validators
         services.AddFluentValidationAutoValidation();
-        services.AddValidatorsFromAssemblyContaining<CreateConversationRequestValidator>();
-        services.AddValidatorsFromAssemblyContaining<SendMessageRequestValidator>();
+        services.AddValidatorsFromAssemblyContaining<ConversationCreateRequestValidator>();
+        services.AddValidatorsFromAssemblyContaining<MessageSendRequestValidator>();
+        services.AddValidatorsFromAssemblyContaining<ListingCreateRequestValidator>();
+        services.AddValidatorsFromAssemblyContaining<ListingUpdateRequestValidator>();
+        services.AddValidatorsFromAssemblyContaining<AuthRequestValidator>();
+        services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
         
         return services;
     }

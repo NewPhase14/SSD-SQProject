@@ -4,7 +4,7 @@ using Infrastructure.Postgres.Scaffolding;
 
 namespace Infrastructure.Postgres.Postgresql.Data;
 
-public class Repo(MyDbContext ctx) : IDataRepository
+public class UserRepo(MyDbContext ctx) : IUserRepo
 {
     public User? GetUserOrNull(string email)
     {

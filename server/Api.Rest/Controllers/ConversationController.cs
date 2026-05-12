@@ -13,17 +13,12 @@ public class ConversationController(IConversationService conversationService, IS
     
     private const string CreateConversationRoute = ControllerRoute + "/Create";
     
-    
     [HttpPost]
     [Route(CreateConversationRoute)]
-    public async Task<ActionResult<ConversationResponseDto>> GetOrCreateConversations([FromBody]CreateConversationRequestDto dto, [FromHeader] string authorization)
+    public async Task<ActionResult<ConversationResponseDto>> GetOrCreateConversations([FromBody]ConversationCreateRequestDto dto, [FromHeader] string authorization)
     {
         var jwt = securityService.VerifyJwtOrThrow(authorization);
         var conversation = await conversationService.GetOrCreateConversationAsync(dto, jwt.Id);
         return Ok(conversation);
     }
-   
-    
-    
-    
 }

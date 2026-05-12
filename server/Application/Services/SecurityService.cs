@@ -5,8 +5,7 @@ using System.Text;
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
-using Application.Models.Dtos;
-using Application.Models.Enums;
+using Application.Models.Dtos.Auth;
 using Core.Domain.Entities;
 using JWT;
 using JWT.Algorithms;
@@ -16,11 +15,11 @@ using Microsoft.Extensions.Options;
 
 namespace Application.Services;
 
-public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IDataRepository repository) : ISecurityService
+public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRepo repo) : ISecurityService
 {
     public AuthResponseDto Login(AuthRequestDto dto)
     {
-        var user = repository.GetUserOrNull(dto.Email) ?? throw new ValidationException("Wrong email or password");
+        var user = repo.GetUserOrNull(dto.Email) ?? throw new ValidationException("Wrong email or password");
         VerifyPasswordOrThrow(dto.Password + user.PasswordSalt, user.PasswordHash);
         return new AuthResponseDto
         {
@@ -37,11 +36,11 @@ public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IDataRe
 
     public AuthResponseDto Register(RegisterRequestDto dto)
     {
-        var user = repository.GetUserOrNull(dto.Email);
+        var user = repo.GetUserOrNull(dto.Email);
         if (user is not null) throw new ValidationException("User already exists");
         var salt = GenerateSalt();
         var hash = HashPassword(dto.Password + salt);
-        var insertedUser = repository.AddUser(new User
+        var insertedUser = repo.AddUser(new User
         {
             Id = Guid.NewGuid().ToString(),
             Name = dto.Name,

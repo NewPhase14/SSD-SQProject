@@ -1,5 +1,4 @@
 using Application.Models.Crypto;
-using Application.Services;
 namespace Application.Interfaces;
 
 public interface ICryptoService

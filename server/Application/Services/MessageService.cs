@@ -2,23 +2,23 @@ using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
 using Application.Models.Crypto;
-using Application.Models.Dtos;
+using Application.Models.Dtos.Messages;
 using Core.Domain.Entities;
 using Microsoft.Extensions.Options;
 
 namespace Application.Services;
 
-public class MessageService(IOptionsMonitor<Encryption> optionsMonitor, IMessageRepo messageRepo, IConversationRepo conversationRepo, IListingRepository listingRepository, ICryptoService cryptoService) : IMessageService
+public class MessageService(IOptionsMonitor<Encryption> optionsMonitor, IMessageRepo messageRepo, IConversationRepo conversationRepo, IListingRepo listingRepo, ICryptoService cryptoService) : IMessageService
 {
     
-    public async Task SendMessageAsync(SendMessageRequestDto dto, string userId)
+    public async Task SendMessageAsync(MessageSendRequestDto dto, string userId)
     {
         var conversation = await conversationRepo.GetAsync(dto.ConversationId);
 
         if (conversation == null)
             throw new Exception("Conversation not found");
         
-        var sellerId = await listingRepository.GetSellerIdAsync(conversation.ListingId);
+        var sellerId = await listingRepo.GetSellerIdAsync(conversation.ListingId);
         
         if (sellerId == null)
             throw new Exception("Listing not found");
@@ -51,7 +51,7 @@ public class MessageService(IOptionsMonitor<Encryption> optionsMonitor, IMessage
         if (conversation == null)
             throw new Exception("Conversation not found");
         
-        var sellerId = await listingRepository.GetSellerIdAsync(conversation.ListingId);
+        var sellerId = await listingRepo.GetSellerIdAsync(conversation.ListingId);
         
         if (sellerId == null)
             throw new Exception("Listing not found");
