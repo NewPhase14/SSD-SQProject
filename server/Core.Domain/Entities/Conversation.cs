@@ -11,8 +11,6 @@ public partial class Conversation
 
     public string BuyerUserId { get; set; } = null!;
 
-    public string SellerUserId { get; set; } = null!;
-
     public DateTime? CreatedAt { get; set; }
 
     public virtual User BuyerUser { get; set; } = null!;
@@ -20,6 +18,4 @@ public partial class Conversation
     public virtual Listing Listing { get; set; } = null!;
 
     public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
-
-    public virtual User SellerUser { get; set; } = null!;
 }

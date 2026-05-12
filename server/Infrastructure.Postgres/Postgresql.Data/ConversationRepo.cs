@@ -1,31 +1,31 @@
 using Application.Interfaces.Infrastructure.Postgres;
 using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Postgres.Postgresql.Data;
 
 public class ConversationRepo(MyDbContext ctx) : IConversationRepo
 {
-    public Task<Conversation?> GetAsync(string conversationId)
+    public async Task<Conversation?> GetAsync(string conversationId)
     {
-        var conversation = ctx.Conversations.FirstOrDefault(c => c.Id == conversationId);
-        return Task.FromResult(conversation);
+        var conversation = await ctx.Conversations.FirstOrDefaultAsync(c => c.Id == conversationId);
+        return conversation;
     }
 
-    public Task<Conversation?> GetByListingAndUsersAsync(string listingId, string buyerUserId, string sellerUserId)
+    public async Task<Conversation?> GetByListingAndBuyerAsync(string listingId, string buyerUserId)
     {
-        var conversation = ctx.Conversations.FirstOrDefault(c =>
+        var conversation = await ctx.Conversations.FirstOrDefaultAsync(c =>
             c.ListingId == listingId &&
-            c.BuyerUserId == buyerUserId &&
-            c.SellerUserId == sellerUserId);
+            c.BuyerUserId == buyerUserId);
 
-        return Task.FromResult(conversation);
+        return conversation;
     }
 
-    public Task<Conversation> CreateAsync(Conversation conversation)
+    public async Task<Conversation> CreateAsync(Conversation conversation)
     {
-        ctx.Conversations.Add(conversation);
-        ctx.SaveChanges();
-        return Task.FromResult(conversation);
+        await ctx.Conversations.AddAsync(conversation);
+        await ctx.SaveChangesAsync();
+        return conversation;
     }
 }

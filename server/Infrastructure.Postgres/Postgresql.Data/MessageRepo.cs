@@ -1,22 +1,23 @@
 using Application.Interfaces.Infrastructure.Postgres;
 using Core.Domain.Entities;
 using Infrastructure.Postgres.Scaffolding;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Postgres.Postgresql.Data;
 
 public class MessageRepo(MyDbContext ctx) : IMessageRepo
 {
     
-    public Task<Message> AddMessageAsync(Message message)
+    public async Task<Message> AddMessageAsync(Message message)
     {
-        ctx.Messages.Add(message);
-        ctx.SaveChanges();
-        return Task.FromResult(message);
+        await ctx.Messages.AddAsync(message);
+        await ctx.SaveChangesAsync();
+        return message;
     }
 
-    public Task<List<Message>> GetByConversationIdAsync(string conversationId)
+    public async Task<List<Message>> GetByConversationIdAsync(string conversationId)
     {
-        var messages = ctx.Messages.Where(m => m.ConversationId == conversationId).ToList();
-        return Task.FromResult(messages);
+        var messages = await ctx.Messages.Where(m => m.ConversationId == conversationId).OrderByDescending(m => m.CreatedAt).ToListAsync();
+        return messages;
     }
 }

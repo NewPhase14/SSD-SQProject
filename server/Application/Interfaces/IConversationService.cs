@@ -1,11 +1,9 @@
+using Application.Models.Dtos.Conversations;
 using Core.Domain.Entities;
 
 namespace Application.Interfaces;
 
 public interface IConversationService
 {
-    Task<Conversation> GetOrCreateConversationAsync(
-        string listingId,
-        string buyerUserId,
-        string sellerUserId);
+    Task<ConversationResponseDto> GetOrCreateConversationAsync(CreateConversationRequestDto dto, string userId);
 }

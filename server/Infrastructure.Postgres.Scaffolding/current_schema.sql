@@ -40,9 +40,8 @@ CREATE TABLE conversations (
                                id TEXT PRIMARY KEY,
                                listing_id TEXT NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
                                buyer_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                               seller_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                               UNIQUE(listing_id, buyer_user_id, seller_user_id)
+                               UNIQUE(listing_id, buyer_user_id)
 );
 
 CREATE TABLE messages (
@@ -97,3 +96,9 @@ INSERT INTO categories (name) VALUES
                                   ('Office Equipment'),
                                   ('Musical Instruments'),
                                   ('Other');
+
+CREATE INDEX idx_conversations_listing_buyer
+    ON conversations (listing_id, buyer_user_id);
+
+CREATE INDEX idx_messages_conversation_created
+    ON messages (conversation_id, created_at);

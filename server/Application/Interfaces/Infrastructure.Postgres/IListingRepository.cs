@@ -10,4 +10,5 @@ public interface IListingRepository
     Task<List<Listing>> GetListingByUserId(string id);
     Task<Listing> DeleteListing(string id);
     Task<List<Image>> AddImages(List<Image> images);
+    Task<String?> GetSellerIdAsync(string listingId);
 }
