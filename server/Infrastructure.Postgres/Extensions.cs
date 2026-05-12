@@ -21,8 +21,8 @@ public static class Extensions
 
         services.AddScoped<IMessageRepo, MessageRepo>();
         services.AddScoped<IConversationRepo, ConversationRepo>();
-        services.AddScoped<IDataRepository, Repo>();
-        services.AddScoped<IListingRepository, ListingRepository>();
+        services.AddScoped<IUserRepo, UserRepo>();
+        services.AddScoped<IListingRepo, ListingRepo>();
 
         return services;
     }

@@ -3,9 +3,9 @@ using FluentValidation;
 
 namespace Application.Validators.Conversations;
 
-public sealed class CreateConversationRequestValidator : AbstractValidator<CreateConversationRequestDto>
+public sealed class ConversationCreateRequestValidator : AbstractValidator<ConversationCreateRequestDto>
 {
-    public CreateConversationRequestValidator()
+    public ConversationCreateRequestValidator()
     {
         RuleFor(x => x.ListingId)
             .NotEmpty().WithMessage("ListingId is required.");

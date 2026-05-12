@@ -1,11 +1,11 @@
-using Application.Models.Dtos;
+using Application.Models.Dtos.Messages;
 using FluentValidation;
 
 namespace Application.Validators.Messages;
 
-public sealed class SendMessageRequestValidator : AbstractValidator<SendMessageRequestDto>
+public sealed class MessageSendRequestValidator : AbstractValidator<MessageSendRequestDto>
 {
-    public SendMessageRequestValidator()
+    public MessageSendRequestValidator()
     {
         RuleFor(x => x.ConversationId)
             .NotEmpty().WithMessage("ConversationId is required.");

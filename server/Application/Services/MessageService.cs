@@ -2,23 +2,23 @@ using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
 using Application.Models.Crypto;
-using Application.Models.Dtos;
+using Application.Models.Dtos.Messages;
 using Core.Domain.Entities;
 using Microsoft.Extensions.Options;
 
 namespace Application.Services;
 
-public class MessageService(IOptionsMonitor<Encryption> optionsMonitor, IMessageRepo messageRepo, IConversationRepo conversationRepo, IListingRepository listingRepository, ICryptoService cryptoService) : IMessageService
+public class MessageService(IOptionsMonitor<Encryption> optionsMonitor, IMessageRepo messageRepo, IConversationRepo conversationRepo, IListingRepo listingRepo, ICryptoService cryptoService) : IMessageService
 {
     
-    public async Task SendMessageAsync(SendMessageRequestDto dto, string userId)
+    public async Task<MessageResponseDto> SendMessageAsync(MessageSendRequestDto dto, string userId)
     {
         var conversation = await conversationRepo.GetAsync(dto.ConversationId);
 
         if (conversation == null)
             throw new Exception("Conversation not found");
         
-        var sellerId = await listingRepository.GetSellerIdAsync(conversation.ListingId);
+        var sellerId = await listingRepo.GetSellerIdAsync(conversation.ListingId);
         
         if (sellerId == null)
             throw new Exception("Listing not found");
@@ -40,8 +40,16 @@ public class MessageService(IOptionsMonitor<Encryption> optionsMonitor, IMessage
             Tag = encryptedText.Tag,
         };
         
-        await messageRepo.AddMessageAsync(message);
+        var sendMessage = await messageRepo.AddMessageAsync(message);
         
+        return new MessageResponseDto()
+        {
+            Id = sendMessage.Id,
+            ConversationId = sendMessage.ConversationId,
+            SenderUserId = sendMessage.SenderUserId,
+            Text = cryptoService.DecryptString(new EncryptedMessage(sendMessage.Ciphertext, sendMessage.Nonce, sendMessage.Tag), key),
+            CreatedAt = sendMessage.CreatedAt
+        };
     }
 
     public async Task<List<MessageResponseDto>> GetMessagesAsync(string conversationId, string userId)
@@ -51,7 +59,7 @@ public class MessageService(IOptionsMonitor<Encryption> optionsMonitor, IMessage
         if (conversation == null)
             throw new Exception("Conversation not found");
         
-        var sellerId = await listingRepository.GetSellerIdAsync(conversation.ListingId);
+        var sellerId = await listingRepo.GetSellerIdAsync(conversation.ListingId);
         
         if (sellerId == null)
             throw new Exception("Listing not found");

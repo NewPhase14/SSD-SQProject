@@ -1,10 +1,10 @@
-namespace Application.Models.Dtos;
+namespace Application.Models.Dtos.Messages;
 
 public class MessageResponseDto
 {
-    public string Id { get; set; }
-    public string ConversationId { get; set; }
-    public string SenderUserId { get; set; }
-    public string Text { get; set; }
+    public string Id { get; set; } = null!;
+    public string ConversationId { get; set; } = null!;
+    public string SenderUserId { get; set; } = null!;
+    public string Text { get; set; } = null!;
     public DateTime? CreatedAt { get; set; }
 }

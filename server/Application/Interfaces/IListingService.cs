@@ -1,13 +1,16 @@
-﻿using Application.Models.Dtos;
-using Core.Domain.Entities;
+﻿using Application.Models.Dtos.Listings;
 
-namespace Application.Interfaces.Infrastructure.Postgres;
+namespace Application.Interfaces;
 
 public interface IListingService
 {
-    Task<ListingResponseDto> CreateListing(ListingCreateRequestDto dto);
-    Task<ListingResponseDto> UpdateListing(ListingUpdateRequestDto dto);
-    Task<List<ListingResponseDto>> GetAllListings();
-    Task<List<ListingResponseDto>> GetListingsByUserId(string id);
-    Task<ListingResponseDto> DeleteListing(string id);
+    Task<ListingResponseDto> CreateListingAsync(ListingCreateRequestDto dto, string userId);
+    
+    Task<ListingResponseDto> UpdateListingAsync(ListingUpdateRequestDto dto, string userId);
+    
+    Task<List<ListingResponseDto>> GetAllListingsAsync();
+    
+    Task<List<ListingResponseDto>> GetListingsByUserIdAsync(string userId);
+    
+    Task<ListingResponseDto> DeleteListingAsync(string listingId, string userId);
 }

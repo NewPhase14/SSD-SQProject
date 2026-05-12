@@ -1,6 +1,7 @@
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models.Dtos;
+using Application.Models.Dtos.Listings;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Rest.Controllers;
@@ -8,24 +9,24 @@ namespace Api.Rest.Controllers;
 [ApiController]
 public class ListingController(IListingService listingService, ISecurityService securityService) : ControllerBase
 {
-    public const string ControllerRoute = "api/listing/";
+    private const string ControllerRoute = "api/listing/";
 
-    public const string CreateRoute = ControllerRoute + nameof(Create);
+    private const string CreateRoute = ControllerRoute + nameof(Create);
     
-    public const string UpdateRoute = ControllerRoute + nameof(Update);
+    private const string UpdateRoute = ControllerRoute + nameof(Update);
     
-    public const string DeleteRoute = ControllerRoute + nameof(Delete);
+    private const string DeleteRoute = ControllerRoute + nameof(Delete);
     
-    public const string GetAllRoute = ControllerRoute + nameof(GetAll);
+    private const string GetAllRoute = ControllerRoute + nameof(GetAll);
     
-    public const string GetAllByUserIdRoute = ControllerRoute + nameof(GetAllByUserId);
+    private const string GetAllByUserIdRoute = ControllerRoute + nameof(GetAllByUserId);
     
     [HttpPost]
     [Route(CreateRoute)]
     public async Task<ActionResult<ListingResponseDto>> Create([FromBody] ListingCreateRequestDto dto, [FromHeader] string authorization)
     {
-        securityService.VerifyJwtOrThrow(authorization);
-        return Ok(await listingService.CreateListing(dto));
+        var jwt = securityService.VerifyJwtOrThrow(authorization);
+        return Ok(await listingService.CreateListingAsync(dto, jwt.Id));
     }
 
     [HttpPut]
@@ -33,34 +34,30 @@ public class ListingController(IListingService listingService, ISecurityService 
     public async Task<ActionResult<ListingResponseDto>> Update([FromBody] ListingUpdateRequestDto dto, [FromHeader] string authorization)
     {
         var jwt = securityService.VerifyJwtOrThrow(authorization);
-        if (jwt.Id != dto.UserId)
-        {
-            return Unauthorized();
-        }
-        return Ok(await listingService.UpdateListing(dto));
+        return Ok(await listingService.UpdateListingAsync(dto, jwt.Id));
     }
 
     [HttpDelete]
     [Route(DeleteRoute)]
-    public async Task<ActionResult<ListingResponseDto>> Delete(string id, [FromHeader] string authorization)
+    public async Task<ActionResult<ListingResponseDto>> Delete(string listingId, [FromHeader] string authorization)
     {
-        securityService.VerifyJwtOrThrow(authorization);
-        return Ok(await listingService.DeleteListing(id));
+        var jwt = securityService.VerifyJwtOrThrow(authorization);
+        return Ok(await listingService.DeleteListingAsync(listingId, jwt.Id));
     }
 
     [HttpGet]
     [Route(GetAllRoute)]
     public async Task<ActionResult<List<ListingResponseDto>>> GetAll()
     {
-        return Ok(await listingService.GetAllListings());
+        return Ok(await listingService.GetAllListingsAsync());
     }
 
     [HttpGet]
     [Route(GetAllByUserIdRoute)]
-    public async Task<ActionResult<List<ListingResponseDto>>> GetAllByUserId(string id, [FromHeader] string authorization)
+    public async Task<ActionResult<List<ListingResponseDto>>> GetAllByUserId([FromHeader] string authorization)
     {
-        securityService.VerifyJwtOrThrow(authorization);
-        return Ok(await listingService.GetListingsByUserId(id));
+        var jwt = securityService.VerifyJwtOrThrow(authorization);
+        return Ok(await listingService.GetListingsByUserIdAsync(jwt.Id));
     }
     
 }
