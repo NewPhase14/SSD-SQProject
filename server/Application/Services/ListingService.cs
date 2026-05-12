@@ -8,7 +8,7 @@ namespace Application.Services;
 public class ListingService(IListingRepo listingRepo) : IListingService
 {
     
-    public async Task<ListingResponseDto> CreateListing(ListingCreateRequestDto dto, string userId)
+    public async Task<ListingResponseDto> CreateListingAsync(ListingCreateRequestDto dto, string userId)
     {
         var listingId = Guid.NewGuid().ToString();
         var listing = new Listing()
@@ -29,7 +29,7 @@ public class ListingService(IListingRepo listingRepo) : IListingService
             }).ToList(),
         };
         
-        var createdListing = await listingRepo.CreateListing(listing);
+        var createdListing = await listingRepo.CreateListingAsync(listing);
         
         return new ListingResponseDto()
         {
@@ -47,9 +47,12 @@ public class ListingService(IListingRepo listingRepo) : IListingService
         };
     }
 
-    public async Task<ListingResponseDto> UpdateListing(ListingUpdateRequestDto dto, string userId)
+    public async Task<ListingResponseDto> UpdateListingAsync(ListingUpdateRequestDto dto, string userId)
     {
         var sellerId  = await listingRepo.GetSellerIdAsync(dto.Id);
+        
+        if (sellerId == null)
+            throw new InvalidOperationException("Listing not found");
         
         if (sellerId != userId)
             throw new UnauthorizedAccessException("You are not the owner of this listing");
@@ -67,7 +70,10 @@ public class ListingService(IListingRepo listingRepo) : IListingService
             UpdatedAt = DateTime.UtcNow,
         };
         
-        var updatedListing = await listingRepo.UpdateListing(listing);
+        var updatedListing = await listingRepo.UpdateListingAsync(listing);
+        if (updatedListing == null)
+            throw new InvalidOperationException("Listing not found");
+        
         return new ListingResponseDto()
         {
             Id = updatedListing.Id,
@@ -84,9 +90,12 @@ public class ListingService(IListingRepo listingRepo) : IListingService
         };
     }
 
-    public async Task<List<ListingResponseDto>> GetAllListings()
+    public async Task<List<ListingResponseDto>> GetAllListingsAsync()
     {
-        var  listings = await listingRepo.GetAllListings();
+        var  listings = await listingRepo.GetAllListingsAsync();
+        if (listings.Count == 0)
+            throw new InvalidOperationException("No listings found");
+        
         return listings.Select(l => new ListingResponseDto()
         {
             Id = l.Id,
@@ -103,9 +112,9 @@ public class ListingService(IListingRepo listingRepo) : IListingService
         }).ToList();
     }
 
-    public async Task<List<ListingResponseDto>> GetListingsByUserId(string id)
+    public async Task<List<ListingResponseDto>> GetListingsByUserIdAsync(string id)
     {
-        var listings = await listingRepo.GetListingByUserId(id);
+        var listings = await listingRepo.GetListingByUserIdAsync(id);
         return listings.Select(l => new ListingResponseDto()
         {
             Id = l.Id,
@@ -122,14 +131,21 @@ public class ListingService(IListingRepo listingRepo) : IListingService
         }).ToList();
     }
 
-    public async Task<ListingResponseDto> DeleteListing(string listingId,  string userId)
+    public async Task<ListingResponseDto> DeleteListingAsync(string listingId,  string userId)
     {
         var sellerId  = await listingRepo.GetSellerIdAsync(listingId);
+        
+        if (sellerId == null)
+            throw new InvalidOperationException("Listing not found");
         
         if (sellerId != userId)
             throw new UnauthorizedAccessException("You are not the owner of this listing");
         
-        var deletedListing = await listingRepo.DeleteListing(listingId); 
+        var deletedListing = await listingRepo.DeleteListingAsync(listingId); 
+        
+        if (deletedListing == null)
+            throw new InvalidOperationException("Listing not found");
+        
         return new ListingResponseDto 
         { 
             Id = deletedListing.Id, 

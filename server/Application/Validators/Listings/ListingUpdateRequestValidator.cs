@@ -7,6 +7,8 @@ public class ListingUpdateRequestValidator : AbstractValidator<ListingUpdateRequ
 {
     public ListingUpdateRequestValidator()
     {
+        RuleFor(x=> x.Id)
+            .NotEmpty().WithMessage("Id is required.");
         RuleFor(x => x.Title)
             .NotEmpty().WithMessage("Title is required.")
             .MaximumLength(50).WithMessage("Title must not exceed 50 characters.");

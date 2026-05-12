@@ -24,11 +24,10 @@ public class MessageController(IMessageService messageService, ISecurityService 
 
     [HttpPost]
     [Route(SendMessageRoute)]
-    public async Task<IActionResult> SendMessage([FromBody]MessageSendRequestDto dto, [FromHeader] string authorization)
+    public async Task<ActionResult<MessageResponseDto>> SendMessage([FromBody]MessageSendRequestDto dto, [FromHeader] string authorization)
     {
         var jwt = securityService.VerifyJwtOrThrow(authorization);
-        await messageService.SendMessageAsync(dto, jwt.Id);
-        return Ok();
+        return Ok(await messageService.SendMessageAsync(dto, jwt.Id));
     }
 
 }        

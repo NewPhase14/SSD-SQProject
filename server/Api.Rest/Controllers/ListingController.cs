@@ -26,7 +26,7 @@ public class ListingController(IListingService listingService, ISecurityService 
     public async Task<ActionResult<ListingResponseDto>> Create([FromBody] ListingCreateRequestDto dto, [FromHeader] string authorization)
     {
         var jwt = securityService.VerifyJwtOrThrow(authorization);
-        return Ok(await listingService.CreateListing(dto, jwt.Id));
+        return Ok(await listingService.CreateListingAsync(dto, jwt.Id));
     }
 
     [HttpPut]
@@ -34,7 +34,7 @@ public class ListingController(IListingService listingService, ISecurityService 
     public async Task<ActionResult<ListingResponseDto>> Update([FromBody] ListingUpdateRequestDto dto, [FromHeader] string authorization)
     {
         var jwt = securityService.VerifyJwtOrThrow(authorization);
-        return Ok(await listingService.UpdateListing(dto, jwt.Id));
+        return Ok(await listingService.UpdateListingAsync(dto, jwt.Id));
     }
 
     [HttpDelete]
@@ -42,14 +42,14 @@ public class ListingController(IListingService listingService, ISecurityService 
     public async Task<ActionResult<ListingResponseDto>> Delete(string listingId, [FromHeader] string authorization)
     {
         var jwt = securityService.VerifyJwtOrThrow(authorization);
-        return Ok(await listingService.DeleteListing(listingId, jwt.Id));
+        return Ok(await listingService.DeleteListingAsync(listingId, jwt.Id));
     }
 
     [HttpGet]
     [Route(GetAllRoute)]
     public async Task<ActionResult<List<ListingResponseDto>>> GetAll()
     {
-        return Ok(await listingService.GetAllListings());
+        return Ok(await listingService.GetAllListingsAsync());
     }
 
     [HttpGet]
@@ -57,7 +57,7 @@ public class ListingController(IListingService listingService, ISecurityService 
     public async Task<ActionResult<List<ListingResponseDto>>> GetAllByUserId([FromHeader] string authorization)
     {
         var jwt = securityService.VerifyJwtOrThrow(authorization);
-        return Ok(await listingService.GetListingsByUserId(jwt.Id));
+        return Ok(await listingService.GetListingsByUserIdAsync(jwt.Id));
     }
     
 }

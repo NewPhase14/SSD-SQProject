@@ -4,10 +4,10 @@ namespace Application.Interfaces.Infrastructure.Postgres;
 
 public interface IListingRepo
 {
-    Task<Listing> CreateListing(Listing listing);
-    Task<Listing> UpdateListing(Listing listing);
-    Task<List<Listing>> GetAllListings();
-    Task<List<Listing>> GetListingByUserId(string id);
-    Task<Listing> DeleteListing(string id);
-    Task<String?> GetSellerIdAsync(string listingId);
+    Task<Listing> CreateListingAsync(Listing listing);
+    Task<Listing?> UpdateListingAsync(Listing listing);
+    Task<List<Listing>> GetAllListingsAsync();
+    Task<List<Listing>> GetListingByUserIdAsync(string id);
+    Task<Listing?> DeleteListingAsync(string id);
+    Task<string?> GetSellerIdAsync(string listingId);
 }

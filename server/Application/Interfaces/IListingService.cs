@@ -4,13 +4,13 @@ namespace Application.Interfaces;
 
 public interface IListingService
 {
-    Task<ListingResponseDto> CreateListing(ListingCreateRequestDto dto, string userId);
+    Task<ListingResponseDto> CreateListingAsync(ListingCreateRequestDto dto, string userId);
     
-    Task<ListingResponseDto> UpdateListing(ListingUpdateRequestDto dto, string userId);
+    Task<ListingResponseDto> UpdateListingAsync(ListingUpdateRequestDto dto, string userId);
     
-    Task<List<ListingResponseDto>> GetAllListings();
+    Task<List<ListingResponseDto>> GetAllListingsAsync();
     
-    Task<List<ListingResponseDto>> GetListingsByUserId(string userId);
+    Task<List<ListingResponseDto>> GetListingsByUserIdAsync(string userId);
     
-    Task<ListingResponseDto> DeleteListing(string listingId, string userId);
+    Task<ListingResponseDto> DeleteListingAsync(string listingId, string userId);
 }

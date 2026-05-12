@@ -8,19 +8,19 @@ namespace Infrastructure.Postgres.Postgresql.Data;
 
 public class ListingRepo(MyDbContext ctx) : IListingRepo
 {
-    public async Task<Listing> CreateListing(Listing listing)
+    public async Task<Listing> CreateListingAsync(Listing listing)
     {
         await ctx.Listings.AddAsync(listing);
         await ctx.SaveChangesAsync();
         return listing;
     }
     
-    public async Task<Listing> UpdateListing(Listing listing)
+    public async Task<Listing?> UpdateListingAsync(Listing listing)
     {
         var existingListing = await ctx.Listings.Include(l => l.Images).FirstOrDefaultAsync(l => l.Id == listing.Id);
         if (existingListing == null)
-            throw new InvalidOperationException("Listing not found");
-
+            return null;
+        
         existingListing.CategoryId = listing.CategoryId;
         existingListing.Condition = listing.Condition;
         existingListing.Title = listing.Title;
@@ -34,25 +34,24 @@ public class ListingRepo(MyDbContext ctx) : IListingRepo
         return updatedListing.Entity;
     }
 
-    public async Task<List<Listing>> GetAllListings()
+    public async Task<List<Listing>> GetAllListingsAsync()
     {
         var listings = await ctx.Listings.Include(l => l.Images).ToListAsync();
         return listings;
     }
 
-    public async Task<List<Listing>> GetListingByUserId(string id)
+    public async Task<List<Listing>> GetListingByUserIdAsync(string id)
     {
         var listing = await ctx.Listings.Include(l => l.Images).Where(l => l.UserId == id).ToListAsync();
-        if (listing.Count == 0)
-            throw new InvalidOperationException("No listings found");
         return listing;
     }
 
-    public async Task<Listing> DeleteListing(string id)
+    public async Task<Listing?> DeleteListingAsync(string id)
     {
         var listing = await ctx.Listings.Include(l => l.Images).FirstOrDefaultAsync(l => l.Id == id);
         if (listing == null)
-            throw new InvalidOperationException("Listing not found");
+            return null;
+
         ctx.Remove(listing);
         await ctx.SaveChangesAsync();
         return listing;
