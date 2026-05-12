@@ -17,8 +17,8 @@ public class ListingResponseDto
     public decimal Price { get; set; }
     
     public string Status { get; set; } = null!;
-    
-    public List<string> ImagePaths { get; set; } = new();
+
+    public List<string> ImageUrls { get; set; } = null!;
     
     public DateTime? CreatedAt { get; set; }
     

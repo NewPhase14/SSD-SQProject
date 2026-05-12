@@ -31,7 +31,8 @@ CREATE TABLE listings (
 
 CREATE TABLE images (
                         id TEXT PRIMARY KEY,
-                        image_path TEXT NOT NULL,
+                        image_url TEXT NOT NULL,
+                        public_id TEXT NOT NULL,
                         listing_id TEXT NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

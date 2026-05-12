@@ -23,7 +23,7 @@ public class ListingController(IListingService listingService, ISecurityService 
     
     [HttpPost]
     [Route(CreateRoute)]
-    public async Task<ActionResult<ListingResponseDto>> Create([FromBody] ListingCreateRequestDto dto, [FromHeader] string authorization)
+    public async Task<ActionResult<ListingResponseDto>> Create([FromForm] ListingCreateRequestDto dto, [FromHeader] string authorization)
     {
         var jwt = securityService.VerifyJwtOrThrow(authorization);
         return Ok(await listingService.CreateListingAsync(dto, jwt.Id));

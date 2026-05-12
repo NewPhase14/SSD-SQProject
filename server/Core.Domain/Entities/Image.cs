@@ -7,7 +7,9 @@ public partial class Image
 {
     public string Id { get; set; } = null!;
 
-    public string ImagePath { get; set; } = null!;
+    public string ImageUrl { get; set; } = null!;
+
+    public string PublicId { get; set; } = null!;
 
     public string ListingId { get; set; } = null!;
 

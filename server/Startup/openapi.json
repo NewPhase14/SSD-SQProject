@@ -125,20 +125,51 @@
             "schema": {
               "type": "string"
             },
-            "x-position": 2
+            "x-position": 1
           }
         ],
         "requestBody": {
-          "x-name": "dto",
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/ListingCreateRequestDto"
+                "type": "object",
+                "properties": {
+                  "CategoryId": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "Condition": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "Title": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "Description": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "Price": {
+                    "type": "number",
+                    "format": "decimal"
+                  },
+                  "Status": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "Images": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
               }
             }
-          },
-          "required": true,
-          "x-position": 1
+          }
         },
         "responses": {
           "200": {
@@ -467,7 +498,7 @@
           "status": {
             "type": "string"
           },
-          "imagePaths": {
+          "imageUrls": {
             "type": "array",
             "items": {
               "type": "string"
@@ -482,37 +513,6 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
-          }
-        }
-      },
-      "ListingCreateRequestDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "categoryId": {
-            "type": "string"
-          },
-          "condition": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "price": {
-            "type": "number",
-            "format": "decimal"
-          },
-          "status": {
-            "type": "string"
-          },
-          "imagePaths": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           }
         }
       },

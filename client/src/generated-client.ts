@@ -151,18 +151,33 @@ export class ListingClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    create(dto: ListingCreateRequestDto, authorization: string | undefined): Promise<ListingResponseDto> {
+    create(authorization: string | undefined, categoryId: string | null | undefined, condition: string | null | undefined, title: string | null | undefined, description: string | null | undefined, price: number | undefined, status: string | null | undefined, images: FileParameter[] | null | undefined): Promise<ListingResponseDto> {
         let url_ = this.baseUrl + "/api/listing/Create";
         url_ = url_.replace(/[?&]$/, "");
 
-        const content_ = JSON.stringify(dto);
+        const content_ = new FormData();
+        if (categoryId !== null && categoryId !== undefined)
+            content_.append("CategoryId", categoryId.toString());
+        if (condition !== null && condition !== undefined)
+            content_.append("Condition", condition.toString());
+        if (title !== null && title !== undefined)
+            content_.append("Title", title.toString());
+        if (description !== null && description !== undefined)
+            content_.append("Description", description.toString());
+        if (price === null || price === undefined)
+            throw new globalThis.Error("The parameter 'price' cannot be null.");
+        else
+            content_.append("Price", price.toString());
+        if (status !== null && status !== undefined)
+            content_.append("Status", status.toString());
+        if (images !== null && images !== undefined)
+            images.forEach(item_ => content_.append("Images", item_.data, item_.fileName ? item_.fileName : "Images") );
 
         let options_: RequestInit = {
             body: content_,
             method: "POST",
             headers: {
                 "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
-                "Content-Type": "application/json",
                 "Accept": "application/json"
             }
         };
@@ -460,19 +475,9 @@ export interface ListingResponseDto {
     description?: string;
     price?: number;
     status?: string;
-    imagePaths?: string[];
+    imageUrls?: string[];
     createdAt?: Date | undefined;
     updatedAt?: Date | undefined;
-}
-
-export interface ListingCreateRequestDto {
-    categoryId?: string;
-    condition?: string;
-    title?: string;
-    description?: string;
-    price?: number;
-    status?: string;
-    imagePaths?: string[];
 }
 
 export interface ListingUpdateRequestDto {
@@ -496,6 +501,11 @@ export interface MessageResponseDto {
 export interface MessageSendRequestDto {
     conversationId?: string;
     plainText?: string;
+}
+
+export interface FileParameter {
+    data: any;
+    fileName: string;
 }
 
 export interface FileResponse {
