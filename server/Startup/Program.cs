@@ -20,9 +20,10 @@ public class Program
 
     public static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        var appOptions = services.AddAppOptions(configuration);
-        var encryption = services.AddEncryption(configuration);
-
+        services.AddAppOptions(configuration);
+        services.AddEncryption(configuration);
+        services.AddCloudinary(configuration);
+        
         services.RegisterApplicationServices();
 
         services.AddDataSourceAndRepositories();

@@ -76,8 +76,9 @@ public partial class MyDbContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnName("created_at");
-            entity.Property(e => e.ImagePath).HasColumnName("image_path");
+            entity.Property(e => e.ImageUrl).HasColumnName("image_url");
             entity.Property(e => e.ListingId).HasColumnName("listing_id");
+            entity.Property(e => e.PublicId).HasColumnName("public_id");
 
             entity.HasOne(d => d.Listing).WithMany(p => p.Images)
                 .HasForeignKey(d => d.ListingId)

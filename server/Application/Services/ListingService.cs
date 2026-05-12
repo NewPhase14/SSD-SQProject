@@ -5,12 +5,34 @@ using Core.Domain.Entities;
 
 namespace Application.Services;
 
-public class ListingService(IListingRepo listingRepo) : IListingService
+public class ListingService(IListingRepo listingRepo, ICloudinaryImageService cloudinaryImageImageService) : IListingService
 {
     
     public async Task<ListingResponseDto> CreateListingAsync(ListingCreateRequestDto dto, string userId)
     {
         var listingId = Guid.NewGuid().ToString();
+
+        var images = new List<Image>();
+        
+        // Upload images to Cloudinary and get the URLs
+        foreach (var file in dto.Images.Where(file => file.Length > 0))
+        {
+            await using var stream = file.OpenReadStream();
+
+            var fileName = Guid.NewGuid().ToString();
+
+            var uploadResult =
+                await cloudinaryImageImageService.UploadImageAsync(stream, fileName);
+
+            images.Add(new Image
+            {
+                Id = Guid.NewGuid().ToString(),
+                ListingId = listingId,
+                ImageUrl = uploadResult.SecureUrl,
+                PublicId = uploadResult.PublicId
+            });
+        }
+        
         var listing = new Listing()
         {
             Id = listingId,
@@ -21,12 +43,7 @@ public class ListingService(IListingRepo listingRepo) : IListingService
             Description = dto.Description,
             Price = dto.Price,
             Status = dto.Status,
-            Images = dto.ImagePaths.Select(p => new Image()
-            {
-                Id = Guid.NewGuid().ToString(),
-                ListingId = listingId,
-                ImagePath = p,
-            }).ToList(),
+            Images = images,
         };
         
         var createdListing = await listingRepo.CreateListingAsync(listing);
@@ -41,7 +58,7 @@ public class ListingService(IListingRepo listingRepo) : IListingService
             Description = createdListing.Description,
             Price = createdListing.Price,
             Status = createdListing.Status,
-            ImagePaths = createdListing.Images.Select(i => i.ImagePath).ToList(),
+            ImageUrls = createdListing.Images.Select(i => i.ImageUrl).ToList(),
             CreatedAt = createdListing.CreatedAt,
             UpdatedAt = createdListing.UpdatedAt,
         };
@@ -82,7 +99,7 @@ public class ListingService(IListingRepo listingRepo) : IListingService
             Condition = updatedListing.Condition,
             Title = updatedListing.Title,
             Description = updatedListing.Description,
-            ImagePaths = updatedListing.Images.Select(i => i.ImagePath).ToList(),
+            ImageUrls = updatedListing.Images.Select(i => i.ImageUrl).ToList(),
             Price = updatedListing.Price,
             Status = updatedListing.Status,
             CreatedAt = updatedListing.CreatedAt,
@@ -106,7 +123,7 @@ public class ListingService(IListingRepo listingRepo) : IListingService
             Description = l.Description,
             Price = l.Price,
             Status = l.Status,
-            ImagePaths = l.Images.Select(i => i.ImagePath).ToList(),
+            ImageUrls = l.Images.Select(i => i.ImageUrl).ToList(),
             CreatedAt = l.CreatedAt,
             UpdatedAt = l.UpdatedAt,
         }).ToList();
@@ -125,7 +142,7 @@ public class ListingService(IListingRepo listingRepo) : IListingService
             Description = l.Description,
             Price = l.Price,
             Status = l.Status,
-            ImagePaths = l.Images.Select(i => i.ImagePath).ToList(),
+            ImageUrls = l.Images.Select(i => i.ImageUrl).ToList(),            
             CreatedAt = l.CreatedAt,
             UpdatedAt = l.UpdatedAt
         }).ToList();
@@ -156,7 +173,7 @@ public class ListingService(IListingRepo listingRepo) : IListingService
             Description = deletedListing.Description, 
             Price = deletedListing.Price, 
             Status = deletedListing.Status, 
-            ImagePaths = deletedListing.Images.Select(i => i.ImagePath).ToList(),
+            ImageUrls = deletedListing.Images.Select(i => i.ImageUrl).ToList(),
             CreatedAt = deletedListing.CreatedAt, 
             UpdatedAt = deletedListing.UpdatedAt, 
         }; 

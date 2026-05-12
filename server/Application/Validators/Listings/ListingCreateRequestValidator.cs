@@ -22,7 +22,7 @@ public class ListingCreateRequestValidator : AbstractValidator<ListingCreateRequ
             .NotEmpty().WithMessage("Condition is required");
         RuleFor(x => x.Status)
             .NotEmpty().WithMessage("Status is required");
-        RuleFor(x => x.ImagePaths)
+        RuleFor(x => x.Images)
             .NotEmpty().WithMessage("At least one image is required.");
     }
 }
