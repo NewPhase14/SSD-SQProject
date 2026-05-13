@@ -5,7 +5,7 @@ using Core.Domain.Entities;
 
 namespace Application.Services;
 
-public class ListingService(IListingRepo listingRepo, ICloudinaryImageService cloudinaryImageImageService) : IListingService
+public class ListingService(IListingRepo listingRepo, ICloudinaryImageService cloudinaryImageImageService, IFileValidationService fileValidationService) : IListingService
 {
     
     public async Task<ListingResponseDto> CreateListingAsync(ListingCreateRequestDto dto, string userId)
@@ -20,6 +20,9 @@ public class ListingService(IListingRepo listingRepo, ICloudinaryImageService cl
             await using var stream = file.OpenReadStream();
 
             var fileName = Guid.NewGuid().ToString();
+            
+            // Validate file before upload
+            await fileValidationService.ValidateImageAsync(stream, file.FileName, file.ContentType);
 
             var uploadResult =
                 await cloudinaryImageImageService.UploadImageAsync(stream, fileName);
