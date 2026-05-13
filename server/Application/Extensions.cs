@@ -21,6 +21,7 @@ public static class Extensions
         services.AddScoped<ISecurityService, SecurityService>();
         services.AddScoped<IListingService, ListingService>();
         services.AddScoped<ICloudinaryImageService, CloudinaryImageImageService>();
+        services.AddScoped<IFileValidationService, FileValidationService>();
         
         
         //Validators

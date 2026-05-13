@@ -5,6 +5,7 @@ namespace Application.Validators.Listings;
 
 public class ListingCreateRequestValidator : AbstractValidator<ListingCreateRequestDto>
 {
+    
     public ListingCreateRequestValidator()
     {
         RuleFor(x => x.Title)
@@ -23,6 +24,9 @@ public class ListingCreateRequestValidator : AbstractValidator<ListingCreateRequ
         RuleFor(x => x.Status)
             .NotEmpty().WithMessage("Status is required");
         RuleFor(x => x.Images)
-            .NotEmpty().WithMessage("At least one image is required.");
+            .NotEmpty()
+            .WithMessage("At least one image is required.")
+            .Must(images => images.Count <= 10)
+            .WithMessage("Maximum 10 images allowed.");
     }
 }
