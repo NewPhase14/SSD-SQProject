@@ -12,6 +12,8 @@ using JWT.Algorithms;
 using JWT.Builder;
 using JWT.Serializers;
 using Microsoft.Extensions.Options;
+using OtpNet;
+using QRCoder;
 
 namespace Application.Services;
 
@@ -26,11 +28,48 @@ public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRe
             Jwt = GenerateJwt(new JwtClaims
             {
                 Id = user.Id,
-                Exp = DateTimeOffset.UtcNow.AddHours(1000)
+                Exp = DateTimeOffset.UtcNow.AddHours(1)
                     .ToUnixTimeSeconds()
                     .ToString(),
                 Email = dto.Email
             })
+        };
+    }
+
+    public TFASetupResponseDto SetupTfa(JwtClaims jwt)
+    {
+        var key = KeyGeneration.GenerateRandomKey();
+        var base32Key = Base32Encoding.ToString(key);
+
+        const string issuer = "Marketplace";
+        var user = jwt.Email;
+
+        var escapedIssuer = Uri.EscapeDataString(issuer);
+        var escapedUser = Uri.EscapeDataString(user);
+        var otpUri = $"otpauth://totp/{escapedIssuer}:{escapedUser}?secret={base32Key}&issuer={escapedIssuer}&digits=6&period=30";
+
+        using var qrGenerator = new QRCodeGenerator();
+        using var qrCodeData = qrGenerator.CreateQrCode(otpUri, QRCodeGenerator.ECCLevel.Q);
+        using var qrCode = new PngByteQRCode(qrCodeData);
+        var qrCodeImage = qrCode.GetGraphic(10);
+
+        return new TFASetupResponseDto
+        {
+            QrCodeImage = qrCodeImage
+        };
+    }
+
+    public ValidateOtpResponseDto ValidateTfa(ValidateOtpRequestDto dto)
+    {
+        var totp = new Totp(KeyGeneration.GenerateRandomKey());
+        var isValid = totp.VerifyTotp(
+            dto.Code, 
+            out var timeStepMatched, 
+            VerificationWindow.RfcSpecifiedNetworkDelay);
+        
+        return new ValidateOtpResponseDto()
+        {
+            IsValid = isValid,
         };
     }
 
@@ -53,7 +92,7 @@ public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRe
             Jwt = GenerateJwt(new JwtClaims
             {
                 Id = insertedUser.Id,
-                Exp = DateTimeOffset.UtcNow.AddHours(1000).ToUnixTimeSeconds().ToString(),
+                Exp = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds().ToString(),
                 Email = insertedUser.Email
             })
         };

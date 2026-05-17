@@ -1,5 +1,4 @@
 using Application.Models;
-using Application.Models.Dtos;
 using Application.Models.Dtos.Auth;
 
 namespace Application.Interfaces;
@@ -15,6 +14,10 @@ public interface ISecurityService
     public string GenerateJwt(JwtClaims claims);
     
     public AuthResponseDto Login(AuthRequestDto dto);
+    
+    public TFASetupResponseDto SetupTfa(JwtClaims jwt);
+    
+    public ValidateOtpResponseDto ValidateTfa(ValidateOtpRequestDto dto);
     
     public AuthResponseDto Register(RegisterRequestDto dto);
     
