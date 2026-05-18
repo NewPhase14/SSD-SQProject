@@ -18,8 +18,12 @@ public class MessageController(IMessageService messageService, ISecurityService 
     public async Task<IActionResult> GetMessages(string conversationId, [FromHeader] string authorization)
     {
         var jwt = securityService.VerifyJwtOrThrow(authorization);
-        var messages = await messageService.GetMessagesAsync(conversationId, jwt.Id);
-        return Ok(messages);
+        if (jwt.Type == "Auth")
+        {
+            var messages = await messageService.GetMessagesAsync(conversationId, jwt.Id);
+            return Ok(messages);
+        }
+        return Unauthorized();
     }
 
     [HttpPost]
@@ -27,7 +31,11 @@ public class MessageController(IMessageService messageService, ISecurityService 
     public async Task<ActionResult<MessageResponseDto>> SendMessage([FromBody]MessageSendRequestDto dto, [FromHeader] string authorization)
     {
         var jwt = securityService.VerifyJwtOrThrow(authorization);
-        return Ok(await messageService.SendMessageAsync(dto, jwt.Id));
+        if (jwt.Type == "Auth")
+        {
+            return Ok(await messageService.SendMessageAsync(dto, jwt.Id));
+        }
+        return Unauthorized();
     }
 
 }        

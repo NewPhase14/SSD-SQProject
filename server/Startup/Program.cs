@@ -14,6 +14,7 @@ public class Program
         var builder = WebApplication.CreateBuilder();
         ConfigureServices(builder.Services, builder.Configuration);
         var app = builder.Build();
+        app.UseHttpsRedirection();
         await ConfigureMiddleware(app);
         await app.RunAsync();
     }
@@ -23,6 +24,7 @@ public class Program
         services.AddAppOptions(configuration);
         services.AddEncryption(configuration);
         services.AddCloudinary(configuration);
+        services.AddTfaOptions(configuration);
         
         services.RegisterApplicationServices();
 

@@ -5,6 +5,7 @@
         <Project Path="server/Core.Domain/Core.Domain.csproj" />
         <Project Path="server/Specs/Specs.csproj" />
         <Project Path="server/Startup/Startup.csproj" />
+        <Project Path="server/UnitTests/UnitTests.csproj" />
         <Project Path="server\Infrastructure.Postgres.Scaffolding\Infrastructure.Postgres.Scaffolding.csproj" />
         <Project Path="server\Infrastructure.Postgres\Infrastructure.Postgres.csproj" />
     </Folder>

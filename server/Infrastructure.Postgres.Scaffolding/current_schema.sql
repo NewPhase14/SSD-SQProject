@@ -6,8 +6,13 @@ CREATE TABLE users (
                        name TEXT NOT NULL,
                        email TEXT NOT NULL,
                        password_hash TEXT NOT NULL,
-                       password_salt TEXT NOT NULL,
-                       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                       tfa_secret BYTEA,
+                       nonce BYTEA,
+                       tag BYTEA,
+                       is_tfa_enabled BOOLEAN NOT NULL,
+                       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
 );
 
 CREATE TABLE categories (

@@ -162,9 +162,15 @@ public partial class MyDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnName("created_at");
             entity.Property(e => e.Email).HasColumnName("email");
+            entity.Property(e => e.IsTfaEnabled).HasColumnName("is_tfa_enabled");
             entity.Property(e => e.Name).HasColumnName("name");
+            entity.Property(e => e.Nonce).HasColumnName("nonce");
             entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
-            entity.Property(e => e.PasswordSalt).HasColumnName("password_salt");
+            entity.Property(e => e.Tag).HasColumnName("tag");
+            entity.Property(e => e.TfaSecret).HasColumnName("tfa_secret");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnName("updated_at");
         });
 
         OnModelCreatingPartial(modelBuilder);
