@@ -2,5 +2,5 @@
 
 public class ValidateOtpRequestDto
 {
-    public string Code { get; set; }
+    public string Code { get; set; } = null!;
 }

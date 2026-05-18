@@ -15,9 +15,9 @@ public interface ISecurityService
     
     public AuthResponseDto Login(AuthRequestDto dto);
     
-    public TFASetupResponseDto SetupTfa(JwtClaims jwt);
+    public TfaSetupResponseDto SetupTfa(JwtClaims jwt);
     
-    public ValidateOtpResponseDto ValidateTfa(ValidateOtpRequestDto dto);
+    public AuthResponseDto ValidateTfa(ValidateOtpRequestDto dto, JwtClaims jwt);
     
     public AuthResponseDto Register(RegisterRequestDto dto);
     

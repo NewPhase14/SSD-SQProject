@@ -1,6 +1,4 @@
-using Api.Rest.Extensions;
 using Application.Interfaces;
-using Application.Models.Dtos;
 using Application.Models.Dtos.Auth;
 using Microsoft.AspNetCore.Mvc;
 
@@ -35,20 +33,28 @@ public class AuthController(ISecurityService securityService) : ControllerBase
 
     [HttpPost]
     [Route(SetupTfaRoute)]
-    public ActionResult<TFASetupResponseDto> SetupTfa([FromHeader] string authorization) 
+    public ActionResult<TfaSetupResponseDto> SetupTfa([FromHeader] string authorization) 
     {
         var jwt = securityService.VerifyJwtOrThrow(authorization);
-        var responseDto = securityService.SetupTfa(jwt);
-        return File(responseDto.QrCodeImage, "image/png");
+        if (jwt.Type == "Auth")
+        {
+            var responseDto = securityService.SetupTfa(jwt);
+            return File(responseDto.QrCodeImage, "image/png");
+        }
+        return Unauthorized();
     }
 
     [HttpPost]
     [Route(ValidateOtpRoute)]
-    public ActionResult<ValidateOtpResponseDto> ValidateOtp([FromBody] ValidateOtpRequestDto dto,
+    public ActionResult<AuthResponseDto> ValidateOtp([FromBody] ValidateOtpRequestDto dto,
         [FromHeader] string authorization)
     {
-        securityService.VerifyJwtOrThrow(authorization);
-        return Ok(securityService.ValidateTfa(dto));
+        var jwt = securityService.VerifyJwtOrThrow(authorization);
+        if (jwt.Type != "2FA")
+        {
+            return Unauthorized();
+        }
+        return Ok(securityService.ValidateTfa(dto, jwt));
     }
     
 }

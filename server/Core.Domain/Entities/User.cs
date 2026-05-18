@@ -17,6 +17,16 @@ public partial class User
 
     public DateTime? CreatedAt { get; set; }
 
+    public DateTime? UpdatedAt { get; set; }
+
+    public byte[]? TfaSecret { get; set; }
+
+    public byte[]? Nonce { get; set; }
+
+    public byte[]? Tag { get; set; }
+
+    public bool IsTfaEnabled { get; set; }
+
     public virtual ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();
 
     public virtual ICollection<Listing> Listings { get; set; } = new List<Listing>();

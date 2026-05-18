@@ -17,4 +17,11 @@ public class UserRepo(MyDbContext ctx) : IUserRepo
         ctx.SaveChanges();
         return user;
     }
+
+    public User UpdateUser(User user)
+    {
+        ctx.Users.Update(user);
+        ctx.SaveChanges();
+        return user;
+    }
 }
