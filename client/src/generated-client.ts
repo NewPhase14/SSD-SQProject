@@ -90,6 +90,78 @@ export class AuthClient {
         }
         return Promise.resolve<AuthResponseDto>(null as any);
     }
+
+    setupTfa(authorization: string | undefined): Promise<TfaSetupResponseDto> {
+        let url_ = this.baseUrl + "/api/auth/SetupTfa";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "POST",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processSetupTfa(_response);
+        });
+    }
+
+    protected processSetupTfa(response: Response): Promise<TfaSetupResponseDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as TfaSetupResponseDto;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<TfaSetupResponseDto>(null as any);
+    }
+
+    validateOtp(dto: ValidateOtpRequestDto, authorization: string | undefined): Promise<AuthResponseDto> {
+        let url_ = this.baseUrl + "/api/auth/ValidateOtp";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(dto);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processValidateOtp(_response);
+        });
+    }
+
+    protected processValidateOtp(response: Response): Promise<AuthResponseDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AuthResponseDto;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<AuthResponseDto>(null as any);
+    }
 }
 
 export class ConversationClient {
@@ -441,6 +513,7 @@ export class MessageClient {
 }
 
 export interface AuthResponseDto {
+    tfaIsRequired?: boolean;
     jwt?: string;
 }
 
@@ -453,6 +526,14 @@ export interface RegisterRequestDto {
     email?: string;
     password?: string;
     name?: string;
+}
+
+export interface TfaSetupResponseDto {
+    qrCodeImage?: string;
+}
+
+export interface ValidateOtpRequestDto {
+    code?: string;
 }
 
 export interface ConversationResponseDto {

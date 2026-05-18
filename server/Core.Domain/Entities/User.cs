@@ -13,10 +13,6 @@ public partial class User
 
     public string PasswordHash { get; set; } = null!;
 
-    public DateTime? CreatedAt { get; set; }
-
-    public DateTime? UpdatedAt { get; set; }
-
     public byte[]? TfaSecret { get; set; }
 
     public byte[]? Nonce { get; set; }
@@ -24,6 +20,10 @@ public partial class User
     public byte[]? Tag { get; set; }
 
     public bool IsTfaEnabled { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
 
     public virtual ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();
 

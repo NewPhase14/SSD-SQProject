@@ -166,7 +166,6 @@ public partial class MyDbContext : DbContext
             entity.Property(e => e.Name).HasColumnName("name");
             entity.Property(e => e.Nonce).HasColumnName("nonce");
             entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
-            entity.Property(e => e.PasswordSalt).HasColumnName("password_salt");
             entity.Property(e => e.Tag).HasColumnName("tag");
             entity.Property(e => e.TfaSecret).HasColumnName("tfa_secret");
             entity.Property(e => e.UpdatedAt)

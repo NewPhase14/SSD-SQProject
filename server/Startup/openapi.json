@@ -70,6 +70,78 @@
         }
       }
     },
+    "/api/auth/SetupTfa": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "Auth_SetupTfa",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TfaSetupResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/ValidateOtp": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "Auth_ValidateOtp",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "dto",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateOtpRequestDto"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/conversation/Create": {
       "post": {
         "tags": [
@@ -409,6 +481,9 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "tfaIsRequired": {
+            "type": "boolean"
+          },
           "jwt": {
             "type": "string"
           }
@@ -437,6 +512,25 @@
             "type": "string"
           },
           "name": {
+            "type": "string"
+          }
+        }
+      },
+      "TfaSetupResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "qrCodeImage": {
+            "type": "string",
+            "format": "byte"
+          }
+        }
+      },
+      "ValidateOtpRequestDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
             "type": "string"
           }
         }

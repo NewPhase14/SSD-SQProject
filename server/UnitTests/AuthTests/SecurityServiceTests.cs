@@ -15,18 +15,30 @@ public class SecurityServiceTests
 {
     private readonly ISecurityService _securityService;
     private readonly Mock<IUserRepo> _mockUserRepo;
+    private readonly ICryptoService _cryptoService;
 
     
-    private static IOptionsMonitor<AppOptions> OptionsMonitor() =>
+    private static IOptionsMonitor<AppOptions> AppOptionsMonitor() =>
         Mock.Of<IOptionsMonitor<AppOptions>>(mock =>
             mock.CurrentValue == new AppOptions
                 { JwtSecret = "e8b61c54fafb487a10a9a84b83d738bed102099bcdb775286657d2195846b774" });
 
+    private static IOptionsMonitor<Encryption> EncryptionOptionsMonitor() =>
+        Mock.Of<IOptionsMonitor<Encryption>>(mock =>
+            mock.CurrentValue == new Encryption
+                { Key = "0123456789abcdef0123456789abcdef" });
+    
+    private static IOptionsMonitor<TfaOptions> TfaOptionsMonitor() =>
+        Mock.Of<IOptionsMonitor<TfaOptions>>(mock =>
+            mock.CurrentValue == new TfaOptions
+                { Issuer = "Marketplace", Digits = 6, Period = 30 });
     public SecurityServiceTests()
     {
         _mockUserRepo = new Mock<IUserRepo>();
+        
+        _cryptoService = new CryptoService();
 
-        _securityService = new SecurityService(OptionsMonitor(), _mockUserRepo.Object);
+        _securityService = new SecurityService(AppOptionsMonitor(), EncryptionOptionsMonitor(), TfaOptionsMonitor(), _mockUserRepo.Object, _cryptoService);
     }
     
     [Fact]
@@ -69,10 +81,11 @@ public class SecurityServiceTests
     }
     
     [Fact]
-    public void GenerateJwt_AndVerify_RoundTrip_ReturnsCorrectClaims()
+    public void GenerateJwt_AndVerify_ReturnsCorrectClaims()
     {
         var claims = new JwtClaims
         {
+            Type = "Auth",
             Id = "123",
             Email = "morten@test.com",
             Exp = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds().ToString()
@@ -91,6 +104,7 @@ public class SecurityServiceTests
     {
         var claims = new JwtClaims
         {
+            Type = "Auth",
             Id = "user-123",
             Email = "morten@test.com",
             Exp = DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeSeconds().ToString() // expired
