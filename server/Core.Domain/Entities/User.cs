@@ -13,8 +13,6 @@ public partial class User
 
     public string PasswordHash { get; set; } = null!;
 
-    public string PasswordSalt { get; set; } = null!;
-
     public DateTime? CreatedAt { get; set; }
 
     public virtual ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();

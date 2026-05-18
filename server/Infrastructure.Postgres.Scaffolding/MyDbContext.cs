@@ -164,7 +164,6 @@ public partial class MyDbContext : DbContext
             entity.Property(e => e.Email).HasColumnName("email");
             entity.Property(e => e.Name).HasColumnName("name");
             entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
-            entity.Property(e => e.PasswordSalt).HasColumnName("password_salt");
         });
 
         OnModelCreatingPartial(modelBuilder);
