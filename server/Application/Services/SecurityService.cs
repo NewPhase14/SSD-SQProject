@@ -12,6 +12,7 @@ using JWT;
 using JWT.Algorithms;
 using JWT.Builder;
 using JWT.Serializers;
+using Konscious.Security.Cryptography;
 using Microsoft.Extensions.Options;
 using OtpNet;
 using QRCoder;
@@ -20,10 +21,20 @@ namespace Application.Services;
 
 public class SecurityService(IOptionsMonitor<AppOptions> appOptionsMonitor, IOptionsMonitor<Encryption> encryptionOptionsMonitor, IOptionsMonitor<TfaOptions> tfaOptions, IUserRepo repo, ICryptoService cryptoService) : ISecurityService
 {
+    // Argon2 settings
+    private const string Name = "argon2id";
+    private const int SaltSize = 16; // 128 bits
+    private const int HashSize = 32; // 256 bits
+    private const int MemorySize = 65536; // 64MB
+    private const int Iterations = 4; 
+    private const int Parallelism = 2;
+    
     public AuthResponseDto Login(AuthRequestDto dto)
     {
-        var user = repo.GetUserOrNull(dto.Email) ?? throw new ValidationException("Wrong email or password");
-        VerifyPasswordOrThrow(dto.Password + user.PasswordSalt, user.PasswordHash);
+        var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
+        
+        var user = repo.GetUserOrNull(normalizedEmail) ?? throw new ValidationException("Wrong email or password");
+        VerifyPasswordOrThrow(dto.Password, user.PasswordHash);
 
         if (user.IsTfaEnabled)
         {
@@ -41,7 +52,7 @@ public class SecurityService(IOptionsMonitor<AppOptions> appOptionsMonitor, IOpt
                 })
             };
         }
-        
+      
         return new AuthResponseDto
         {
             Jwt = GenerateJwt(new JwtClaims
@@ -118,16 +129,18 @@ public class SecurityService(IOptionsMonitor<AppOptions> appOptionsMonitor, IOpt
 
     public AuthResponseDto Register(RegisterRequestDto dto)
     {
-        var user = repo.GetUserOrNull(dto.Email);
-        if (user is not null) throw new ValidationException("User already exists");
-        var salt = GenerateSalt();
-        var hash = HashPassword(dto.Password + salt);
+        var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
+        
+        var existingUser = repo.GetUserOrNull(normalizedEmail);
+        if (existingUser is not null) throw new ValidationException("User already exists");
+        
+        var hash = HashPassword(dto.Password);
+        
         var insertedUser = repo.AddUser(new User
         {
             Id = Guid.NewGuid().ToString(),
             Name = dto.Name,
-            Email = dto.Email,
-            PasswordSalt = salt,
+            Email = normalizedEmail,
             PasswordHash = hash
         });
         return new AuthResponseDto
@@ -141,29 +154,77 @@ public class SecurityService(IOptionsMonitor<AppOptions> appOptionsMonitor, IOpt
             })
         };
     }
+    
+    private byte[] GenerateSalt()
+    {
+        return RandomNumberGenerator.GetBytes(SaltSize);
+    }
 
-    /// <summary>
-    ///     Gives hex representation of SHA512 hash
-    /// </summary>
-    /// <param name="password"></param>
-    /// <returns></returns>
     public string HashPassword(string password)
     {
-        using var sha512 = SHA512.Create();
-        var bytes = Encoding.UTF8.GetBytes(password);
-        var hash = sha512.ComputeHash(bytes);
-        return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+        var salt = GenerateSalt();
+        
+        var passwordBytes = Encoding.UTF8.GetBytes(password);
+        
+        using var argon2 = new Argon2id(passwordBytes)
+        {
+            Salt = salt,
+            // CPU cost
+            Iterations = Iterations,
+            // RAM cost
+            MemorySize = MemorySize,
+            // Parallel CPU threads
+            DegreeOfParallelism = Parallelism
+        };
+
+        // Generate final hash bytes
+        var hash = argon2.GetBytes(HashSize);
+        
+        return $"{Name}${Encode(salt)}${Encode(hash)}";
     }
 
-    public void VerifyPasswordOrThrow(string password, string hashedPassword)
+    public void VerifyPasswordOrThrow(string password, string storedHash)
     {
-        if (HashPassword(password) != hashedPassword)
-            throw new AuthenticationException("Invalid login");
+        var parts = storedHash.Split('$');
+        if (parts.Length != 3)
+            throw new ValidationException("Wrong email or password");
+        
+        var saltEncoded = parts[1];
+        var hashEncoded = parts[2];
+        
+        var salt = Decode(saltEncoded);
+        var expectedHash = Decode(hashEncoded);
+        
+        var passwordBytes = Encoding.UTF8.GetBytes(password);
+
+        
+        using var argon2 = new Argon2id(passwordBytes)
+        {
+            Salt = salt,
+            Iterations = Iterations,
+            MemorySize = MemorySize,
+            DegreeOfParallelism = Parallelism
+        };
+        
+        var actualHash = argon2.GetBytes(HashSize);
+        
+        var verified = CryptographicOperations.FixedTimeEquals(
+            actualHash,
+            expectedHash
+        );
+        
+        if (!verified)
+            throw new AuthenticationException("Wrong email or password");
     }
 
-    public string GenerateSalt()
+    private static byte[] Decode(string value)
     {
-        return Guid.NewGuid().ToString();
+        return Convert.FromBase64String(value);
+    }
+
+    private static string Encode(byte[] value)
+    {
+        return Convert.ToBase64String(value);
     }
 
     public string GenerateJwt(JwtClaims claims)
