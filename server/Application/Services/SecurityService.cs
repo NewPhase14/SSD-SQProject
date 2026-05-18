@@ -5,6 +5,7 @@ using System.Text;
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models;
+using Application.Models.Crypto;
 using Application.Models.Dtos.Auth;
 using Core.Domain.Entities;
 using JWT;
@@ -13,10 +14,12 @@ using JWT.Builder;
 using JWT.Serializers;
 using Konscious.Security.Cryptography;
 using Microsoft.Extensions.Options;
+using OtpNet;
+using QRCoder;
 
 namespace Application.Services;
 
-public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRepo repo) : ISecurityService
+public class SecurityService(IOptionsMonitor<AppOptions> appOptionsMonitor, IOptionsMonitor<Encryption> encryptionOptionsMonitor, IOptionsMonitor<TfaOptions> tfaOptions, IUserRepo repo, ICryptoService cryptoService) : ISecurityService
 {
     // Argon2 settings
     private const string Name = "argon2id";
@@ -32,15 +35,94 @@ public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRe
         
         var user = repo.GetUserOrNull(normalizedEmail) ?? throw new ValidationException("Wrong email or password");
         VerifyPasswordOrThrow(dto.Password, user.PasswordHash);
+
+        if (user.IsTfaEnabled)
+        {
+            return new AuthResponseDto()
+            {
+                TfaIsRequired = true,
+                Jwt = GenerateJwt(new JwtClaims
+                {
+                    Id = user.Id,
+                    Exp = DateTimeOffset.UtcNow.AddMinutes(5)
+                        .ToUnixTimeSeconds()
+                        .ToString(),
+                    Email = user.Email,
+                    Type = "2FA"
+                })
+            };
+        }
+      
         return new AuthResponseDto
         {
             Jwt = GenerateJwt(new JwtClaims
             {
                 Id = user.Id,
-                Exp = DateTimeOffset.UtcNow.AddHours(1000)
+                Exp = DateTimeOffset.UtcNow.AddHours(1)
                     .ToUnixTimeSeconds()
                     .ToString(),
-                Email = user.Email
+                Email = dto.Email,
+                Type = "Auth"
+            })
+        };
+    }
+
+    public TfaSetupResponseDto SetupTfa(JwtClaims jwt)
+    {
+        var key = KeyGeneration.GenerateRandomKey();
+        var base32Key = Base32Encoding.ToString(key);
+
+        var escapedIssuer = Uri.EscapeDataString(tfaOptions.CurrentValue.Issuer);
+        var escapedUser = Uri.EscapeDataString(jwt.Email);
+        var otpUri = $"otpauth://totp/{escapedIssuer}:{escapedUser}?secret={base32Key}&issuer={escapedIssuer}&digits={tfaOptions.CurrentValue.Digits}&period={tfaOptions.CurrentValue.Period}";
+
+        using var qrGenerator = new QRCodeGenerator();
+        using var qrCodeData = qrGenerator.CreateQrCode(otpUri, QRCodeGenerator.ECCLevel.Q);
+        using var qrCode = new PngByteQRCode(qrCodeData);
+        var qrCodeImage = qrCode.GetGraphic(10);
+
+        var user = repo.GetUserOrNull(jwt.Email) ?? throw new InvalidOperationException("User not found");
+        
+        if (user.IsTfaEnabled) throw new InvalidOperationException("2FA is already enabled for this user");
+        
+        user.UpdatedAt = DateTime.UtcNow;
+        user.IsTfaEnabled = true;
+        var encryptionKey = Convert.FromBase64String(encryptionOptionsMonitor.CurrentValue.Key);
+        var encryptedTfa = cryptoService.Encrypt(key, encryptionKey);
+        user.TfaSecret = encryptedTfa.CipherText;
+        user.Tag = encryptedTfa.Tag;
+        user.Nonce = encryptedTfa.Nonce;
+        repo.UpdateUser(user);
+        return new TfaSetupResponseDto
+        {
+            QrCodeImage = qrCodeImage
+        };
+    }
+
+    public AuthResponseDto ValidateTfa(ValidateOtpRequestDto dto, JwtClaims jwt)
+    {
+        var user = repo.GetUserOrNull(jwt.Email) ?? throw new InvalidOperationException("User not found");
+        if (user.TfaSecret is null || !user.IsTfaEnabled || user.Nonce is null || user.Tag is null) throw new InvalidOperationException("2FA not set up for this user");
+        
+        var totp = new Totp(cryptoService.Decrypt(new EncryptedMessage(user.TfaSecret, user.Nonce, user.Tag), Convert.FromBase64String(encryptionOptionsMonitor.CurrentValue.Key)));
+        var isValid = totp.VerifyTotp(
+            dto.Code, 
+            out var timeStepMatched, 
+            VerificationWindow.RfcSpecifiedNetworkDelay);
+
+        if (!isValid)
+            throw new InvalidOperationException("Invalid code");
+        
+        return new AuthResponseDto()
+        {
+            Jwt = GenerateJwt(new JwtClaims
+            {
+                Id = user.Id,
+                Exp = DateTimeOffset.UtcNow.AddHours(1)
+                    .ToUnixTimeSeconds()
+                    .ToString(),
+                Email = user.Email,
+                Type = "Auth"
             })
         };
     }
@@ -66,8 +148,9 @@ public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRe
             Jwt = GenerateJwt(new JwtClaims
             {
                 Id = insertedUser.Id,
-                Exp = DateTimeOffset.UtcNow.AddHours(1000).ToUnixTimeSeconds().ToString(),
-                Email = insertedUser.Email
+                Exp = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds().ToString(),
+                Email = insertedUser.Email,
+                Type = "Auth"
             })
         };
     }
@@ -148,7 +231,7 @@ public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRe
     {
         var tokenBuilder = new JwtBuilder()
             .WithAlgorithm(new HMACSHA512Algorithm())
-            .WithSecret(optionsMonitor.CurrentValue.JwtSecret)
+            .WithSecret(appOptionsMonitor.CurrentValue.JwtSecret)
             .WithUrlEncoder(new JwtBase64UrlEncoder())
             .WithJsonSerializer(new JsonNetSerializer());
 
@@ -161,7 +244,7 @@ public class SecurityService(IOptionsMonitor<AppOptions> optionsMonitor, IUserRe
     {
         var token = new JwtBuilder()
             .WithAlgorithm(new HMACSHA512Algorithm())
-            .WithSecret(optionsMonitor.CurrentValue.JwtSecret)
+            .WithSecret(appOptionsMonitor.CurrentValue.JwtSecret)
             .WithUrlEncoder(new JwtBase64UrlEncoder())
             .WithJsonSerializer(new JsonNetSerializer())
             .MustVerifySignature()

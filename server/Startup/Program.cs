@@ -24,6 +24,7 @@ public class Program
         services.AddAppOptions(configuration);
         services.AddEncryption(configuration);
         services.AddCloudinary(configuration);
+        services.AddTfaOptions(configuration);
         
         services.RegisterApplicationServices();
 

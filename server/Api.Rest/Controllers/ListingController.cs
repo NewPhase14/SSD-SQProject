@@ -1,6 +1,4 @@
 using Application.Interfaces;
-using Application.Interfaces.Infrastructure.Postgres;
-using Application.Models.Dtos;
 using Application.Models.Dtos.Listings;
 using Microsoft.AspNetCore.Mvc;
 
@@ -26,7 +24,11 @@ public class ListingController(IListingService listingService, ISecurityService 
     public async Task<ActionResult<ListingResponseDto>> Create([FromForm] ListingCreateRequestDto dto, [FromHeader] string authorization)
     {
         var jwt = securityService.VerifyJwtOrThrow(authorization);
-        return Ok(await listingService.CreateListingAsync(dto, jwt.Id));
+        if (jwt.Type == "Auth")
+        {
+            return Ok(await listingService.CreateListingAsync(dto, jwt.Id));
+        }
+        return Unauthorized();
     }
 
     [HttpPut]
@@ -34,7 +36,11 @@ public class ListingController(IListingService listingService, ISecurityService 
     public async Task<ActionResult<ListingResponseDto>> Update([FromBody] ListingUpdateRequestDto dto, [FromHeader] string authorization)
     {
         var jwt = securityService.VerifyJwtOrThrow(authorization);
-        return Ok(await listingService.UpdateListingAsync(dto, jwt.Id));
+        if (jwt.Type == "Auth")
+        {
+            return Ok(await listingService.UpdateListingAsync(dto, jwt.Id));
+        }
+        return Unauthorized();
     }
 
     [HttpDelete]
@@ -42,7 +48,11 @@ public class ListingController(IListingService listingService, ISecurityService 
     public async Task<ActionResult<ListingResponseDto>> Delete(string listingId, [FromHeader] string authorization)
     {
         var jwt = securityService.VerifyJwtOrThrow(authorization);
-        return Ok(await listingService.DeleteListingAsync(listingId, jwt.Id));
+        if (jwt.Type == "Auth")
+        {
+            return Ok(await listingService.DeleteListingAsync(listingId, jwt.Id));
+        }
+        return Unauthorized();
     }
 
     [HttpGet]
@@ -57,7 +67,11 @@ public class ListingController(IListingService listingService, ISecurityService 
     public async Task<ActionResult<List<ListingResponseDto>>> GetAllByUserId([FromHeader] string authorization)
     {
         var jwt = securityService.VerifyJwtOrThrow(authorization);
-        return Ok(await listingService.GetListingsByUserIdAsync(jwt.Id));
+        if (jwt.Type == "Auth")
+        {
+            return Ok(await listingService.GetListingsByUserIdAsync(jwt.Id));
+        }
+        return Unauthorized();
     }
     
 }
