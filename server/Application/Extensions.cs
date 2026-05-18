@@ -20,7 +20,7 @@ public static class Extensions
         services.AddScoped<ICryptoService, CryptoService>();
         services.AddScoped<ISecurityService, SecurityService>();
         services.AddScoped<IListingService, ListingService>();
-        services.AddScoped<ICloudinaryImageService, CloudinaryImageImageService>();
+        services.AddScoped<ICloudinaryImageService, CloudinaryImageService>();
         services.AddScoped<IFileValidationService, FileValidationService>();
         
         

@@ -10,4 +10,5 @@ public interface IListingRepo
     Task<List<Listing>> GetListingByUserIdAsync(string id);
     Task<Listing?> DeleteListingAsync(string id);
     Task<string?> GetSellerIdAsync(string listingId);
+    Task<Listing?> GetListingByIdAsync(string listingId);
 }

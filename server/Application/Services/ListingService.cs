@@ -5,7 +5,7 @@ using Core.Domain.Entities;
 
 namespace Application.Services;
 
-public class ListingService(IListingRepo listingRepo, ICloudinaryImageService cloudinaryImageImageService, IFileValidationService fileValidationService) : IListingService
+public class ListingService(IListingRepo listingRepo, ICloudinaryImageService cloudinaryImageService, IFileValidationService fileValidationService) : IListingService
 {
     
     public async Task<ListingResponseDto> CreateListingAsync(ListingCreateRequestDto dto, string userId)
@@ -25,7 +25,7 @@ public class ListingService(IListingRepo listingRepo, ICloudinaryImageService cl
             await fileValidationService.ValidateImageAsync(stream, file.FileName, file.ContentType);
 
             var uploadResult =
-                await cloudinaryImageImageService.UploadImageAsync(stream, fileName);
+                await cloudinaryImageService.UploadImageAsync(stream, fileName);
 
             images.Add(new Image
             {
@@ -153,18 +153,25 @@ public class ListingService(IListingRepo listingRepo, ICloudinaryImageService cl
 
     public async Task<ListingResponseDto> DeleteListingAsync(string listingId,  string userId)
     {
-        var sellerId  = await listingRepo.GetSellerIdAsync(listingId);
-        
-        if (sellerId == null)
+        var listing =
+            await listingRepo.GetListingByIdAsync(listingId);
+
+        if (listing == null)
             throw new InvalidOperationException("Listing not found");
         
-        if (sellerId != userId)
+        if (listing.UserId != userId)
             throw new UnauthorizedAccessException("You are not the owner of this listing");
         
+        var publicIds = listing.Images.Select(i => i.PublicId).ToList();
+        
+        // Delete Cloudinary images from listing
+        await cloudinaryImageService.DeleteImagesAsync(publicIds);
+        
+        // Delete listing from DB
         var deletedListing = await listingRepo.DeleteListingAsync(listingId); 
         
         if (deletedListing == null)
-            throw new InvalidOperationException("Listing not found");
+            throw new InvalidOperationException("Failed to delete listing");
         
         return new ListingResponseDto 
         { 
