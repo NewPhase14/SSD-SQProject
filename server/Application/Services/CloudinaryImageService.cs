@@ -5,7 +5,7 @@ using CloudinaryDotNet.Actions;
 
 namespace Application.Services;
 
-public class CloudinaryImageImageService(Cloudinary cloudinary) : ICloudinaryImageService
+public class CloudinaryImageService(Cloudinary cloudinary) : ICloudinaryImageService
 {
     // Uploads an image asynchronously to Cloudinary and returns the image URL (URL is the link to the uploaded image)
     public async Task<CloudinaryUploadResponseDto> UploadImageAsync(Stream fileStream, string fileName)
@@ -31,14 +31,17 @@ public class CloudinaryImageImageService(Cloudinary cloudinary) : ICloudinaryIma
         };
     }
 
-    public async Task DeleteImageAsync(string publicId)
+    public async Task DeleteImagesAsync(List<string> publicIds)
     {
-        var deleteParams = new DeletionParams(publicId)
+        if (publicIds.Count ==0)
+            return;
+        
+        var deleteParams = new DelResParams
         {
-            ResourceType = ResourceType.Image
+            PublicIds = publicIds
         };
 
-        var deletionResult = await cloudinary.DestroyAsync(deleteParams);
+        var deletionResult = await cloudinary.DeleteResourcesAsync(deleteParams);
         if (deletionResult == null) throw new InvalidOperationException("Image deletion failed");
     }
 }

@@ -62,4 +62,10 @@ public class ListingRepo(MyDbContext ctx) : IListingRepo
         var sellerId = await ctx.Listings.Where(l => l.Id == listingId).Select(l => l.UserId).FirstOrDefaultAsync();
         return sellerId;
     }
+
+    public async Task<Listing?> GetListingByIdAsync(string listingId)
+    {
+        var listing = await ctx.Listings.Include(l => l.Images).FirstOrDefaultAsync(l => l.Id == listingId);
+        return listing;
+    }
 }
