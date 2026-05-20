@@ -72,7 +72,6 @@ public class MessageServiceTests
         BuyerUser   = Buyer,
         Listing     = Listing
     };
-
     
     public MessageServiceTests()
     {
