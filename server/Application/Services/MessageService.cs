@@ -26,9 +26,7 @@ public class MessageService(IOptionsMonitor<Encryption> optionsMonitor, IMessage
         if (userId != conversation.BuyerUserId && userId != sellerId)
             throw new UnauthorizedAccessException("You are not a participant in this conversation");
         
-        var key = Convert.FromBase64String(optionsMonitor.CurrentValue.Key);
-        
-        var encryptedText = cryptoService.Encrypt(dto.PlainText, key);
+        var encryptedText = cryptoService.Encrypt(dto.PlainText, GetEncryptionKey());
         
         var message = new Message
         {
@@ -47,7 +45,7 @@ public class MessageService(IOptionsMonitor<Encryption> optionsMonitor, IMessage
             Id = sendMessage.Id,
             ConversationId = sendMessage.ConversationId,
             SenderUserId = sendMessage.SenderUserId,
-            Text = cryptoService.DecryptString(new EncryptedMessage(sendMessage.Ciphertext, sendMessage.Nonce, sendMessage.Tag), key),
+            Text = cryptoService.DecryptString(new EncryptedMessage(sendMessage.Ciphertext, sendMessage.Nonce, sendMessage.Tag), GetEncryptionKey()),
             CreatedAt = sendMessage.CreatedAt
         };
     }
@@ -67,8 +65,6 @@ public class MessageService(IOptionsMonitor<Encryption> optionsMonitor, IMessage
         if (userId != conversation.BuyerUserId && userId != sellerId)
             throw new UnauthorizedAccessException("You are not a participant in this conversation");
         
-        var key = Convert.FromBase64String(optionsMonitor.CurrentValue.Key);
-        
         var messages = await messageRepo.GetByConversationIdAsync(conversationId);
         
         var response = messages.Select(m => new MessageResponseDto
@@ -76,10 +72,16 @@ public class MessageService(IOptionsMonitor<Encryption> optionsMonitor, IMessage
             Id = m.Id,
             ConversationId = m.ConversationId,
             SenderUserId = m.SenderUserId, 
-            Text = cryptoService.DecryptString(new EncryptedMessage(m.Ciphertext, m.Nonce, m.Tag), key),
+            Text = cryptoService.DecryptString(new EncryptedMessage(m.Ciphertext, m.Nonce, m.Tag), GetEncryptionKey()),
             CreatedAt = m.CreatedAt
         }).ToList();
         
         return response;
+    }
+    
+    private byte[] GetEncryptionKey()
+    {
+        return Convert.FromBase64String(
+            optionsMonitor.CurrentValue.Key);
     }
 }

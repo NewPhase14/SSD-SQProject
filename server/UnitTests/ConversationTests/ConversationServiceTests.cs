@@ -10,7 +10,6 @@ namespace UnitTests.ConversationTests;
 public class ConversationServiceTests
 {
     private readonly IConversationService _conversationService;
-
     private readonly Mock<IConversationRepo> _mockConversationRepo = new();
     private readonly Mock<IListingRepo> _mockListingRepo = new();
 

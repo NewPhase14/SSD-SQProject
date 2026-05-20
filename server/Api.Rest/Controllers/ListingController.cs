@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Api.Rest.Controllers;
 
 [ApiController]
-public class ListingController(IListingService listingService, ISecurityService securityService) : ControllerBase
+public class ListingController(IListingService listingService, IJwtService jwtService) : ControllerBase
 {
     private const string ControllerRoute = "api/listing/";
 
@@ -23,7 +23,7 @@ public class ListingController(IListingService listingService, ISecurityService 
     [Route(CreateRoute)]
     public async Task<ActionResult<ListingResponseDto>> Create([FromForm] ListingCreateRequestDto dto, [FromHeader] string authorization)
     {
-        var jwt = securityService.VerifyJwtOrThrow(authorization);
+        var jwt = jwtService.VerifyJwtOrThrow(authorization);
         if (jwt.Type == "Auth")
         {
             return Ok(await listingService.CreateListingAsync(dto, jwt.Id));
@@ -35,7 +35,7 @@ public class ListingController(IListingService listingService, ISecurityService 
     [Route(UpdateRoute)]
     public async Task<ActionResult<ListingResponseDto>> Update([FromBody] ListingUpdateRequestDto dto, [FromHeader] string authorization)
     {
-        var jwt = securityService.VerifyJwtOrThrow(authorization);
+        var jwt = jwtService.VerifyJwtOrThrow(authorization);
         if (jwt.Type == "Auth")
         {
             return Ok(await listingService.UpdateListingAsync(dto, jwt.Id));
@@ -47,7 +47,7 @@ public class ListingController(IListingService listingService, ISecurityService 
     [Route(DeleteRoute)]
     public async Task<ActionResult<ListingResponseDto>> Delete(string listingId, [FromHeader] string authorization)
     {
-        var jwt = securityService.VerifyJwtOrThrow(authorization);
+        var jwt = jwtService.VerifyJwtOrThrow(authorization);
         if (jwt.Type == "Auth")
         {
             return Ok(await listingService.DeleteListingAsync(listingId, jwt.Id));
@@ -66,7 +66,7 @@ public class ListingController(IListingService listingService, ISecurityService 
     [Route(GetAllByUserIdRoute)]
     public async Task<ActionResult<List<ListingResponseDto>>> GetAllByUserId([FromHeader] string authorization)
     {
-        var jwt = securityService.VerifyJwtOrThrow(authorization);
+        var jwt = jwtService.VerifyJwtOrThrow(authorization);
         if (jwt.Type == "Auth")
         {
             return Ok(await listingService.GetListingsByUserIdAsync(jwt.Id));

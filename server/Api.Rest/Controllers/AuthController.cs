@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Api.Rest.Controllers;
 
 [ApiController]
-public class AuthController(ISecurityService securityService) : ControllerBase
+public class AuthController(IAuthenticationService authenticationService ,IJwtService jwtService) : ControllerBase
 {
     private const string ControllerRoute = "api/auth/";
 
@@ -21,24 +21,24 @@ public class AuthController(ISecurityService securityService) : ControllerBase
     [Route(LoginRoute)]
     public ActionResult<AuthResponseDto> Login([FromBody] AuthRequestDto dto)
     {
-        return Ok(securityService.Login(dto));
+        return Ok(authenticationService.Login(dto));
     }
 
     [Route(RegisterRoute)]
     [HttpPost]
     public ActionResult<AuthResponseDto> Register([FromBody] RegisterRequestDto dto)
     {
-        return Ok(securityService.Register(dto));
+        return Ok(authenticationService.Register(dto));
     }
 
     [HttpPost]
     [Route(SetupTfaRoute)]
     public ActionResult<TfaSetupResponseDto> SetupTfa([FromHeader] string authorization) 
     {
-        var jwt = securityService.VerifyJwtOrThrow(authorization);
+        var jwt = jwtService.VerifyJwtOrThrow(authorization);
         if (jwt.Type == "Auth")
         {
-            var responseDto = securityService.SetupTfa(jwt);
+            var responseDto = authenticationService.SetupTfa(jwt);
             return File(responseDto.QrCodeImage, "image/png");
         }
         return Unauthorized();
@@ -49,12 +49,12 @@ public class AuthController(ISecurityService securityService) : ControllerBase
     public ActionResult<AuthResponseDto> ValidateOtp([FromBody] ValidateOtpRequestDto dto,
         [FromHeader] string authorization)
     {
-        var jwt = securityService.VerifyJwtOrThrow(authorization);
+        var jwt = jwtService.VerifyJwtOrThrow(authorization);
         if (jwt.Type != "2FA")
         {
             return Unauthorized();
         }
-        return Ok(securityService.ValidateTfa(dto, jwt));
+        return Ok(authenticationService.ValidateTfa(dto, jwt));
     }
     
 }

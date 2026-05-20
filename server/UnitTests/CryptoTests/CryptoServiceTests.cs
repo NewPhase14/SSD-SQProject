@@ -6,7 +6,6 @@ namespace UnitTests.CryptoTests;
 
 public class CryptoServiceTests
 {
-    
     private readonly ICryptoService _cryptoService =  new CryptoService();
     
     // AES-GCM requires a 256-bit (32 byte) key

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Api.Rest.Controllers;
 
 [ApiController]
-public class MessageController(IMessageService messageService, ISecurityService securityService) : ControllerBase
+public class MessageController(IMessageService messageService, IJwtService jwtService) : ControllerBase
 {
     private const string ControllerRoute = "/api/message";
 
@@ -17,11 +17,10 @@ public class MessageController(IMessageService messageService, ISecurityService 
     [Route(GetMessagesRoute)]
     public async Task<IActionResult> GetMessages(string conversationId, [FromHeader] string authorization)
     {
-        var jwt = securityService.VerifyJwtOrThrow(authorization);
+        var jwt = jwtService.VerifyJwtOrThrow(authorization);
         if (jwt.Type == "Auth")
         {
-            var messages = await messageService.GetMessagesAsync(conversationId, jwt.Id);
-            return Ok(messages);
+            return Ok(await messageService.GetMessagesAsync(conversationId, jwt.Id));
         }
         return Unauthorized();
     }
@@ -30,7 +29,7 @@ public class MessageController(IMessageService messageService, ISecurityService 
     [Route(SendMessageRoute)]
     public async Task<ActionResult<MessageResponseDto>> SendMessage([FromBody]MessageSendRequestDto dto, [FromHeader] string authorization)
     {
-        var jwt = securityService.VerifyJwtOrThrow(authorization);
+        var jwt = jwtService.VerifyJwtOrThrow(authorization);
         if (jwt.Type == "Auth")
         {
             return Ok(await messageService.SendMessageAsync(dto, jwt.Id));
