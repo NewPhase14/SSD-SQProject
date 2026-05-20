@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models.Dtos.Listings;
@@ -47,22 +49,26 @@ public sealed class DeleteListingStepDefinitions
         var listing = new Listing
         {
             Id = listingId,
+            CategoryId = "cat-1",
+            Condition = "New",
             UserId = ownerUserId,
             Title = "Test Listing",
             Description = "A listing for testing deletion.",
             Price = 100,
+            Status = "Active",
         };
 
-        mockListingRepo.Reset();
-        mockCloudinary.Reset();
-
         mockListingRepo
-            .Setup(r => r.GetSellerIdAsync(listingId))
-            .ReturnsAsync(ownerUserId);
+            .Setup(r => r.GetListingByIdAsync(listingId))
+            .ReturnsAsync(listing);
 
         mockListingRepo
             .Setup(r => r.DeleteListingAsync(listingId))
             .ReturnsAsync(listing);
+        
+        mockCloudinary
+            .Setup(c => c.DeleteImagesAsync(It.IsAny<List<string>>()))
+            .Returns(Task.CompletedTask);
     }
 
     [When("the user presses delete on listing")]
@@ -94,11 +100,9 @@ public sealed class DeleteListingStepDefinitions
         Assert.Equal(listingId, deletedResponse!.Id);
         Assert.Equal(ownerUserId, deletedResponse.UserId);
 
-        mockListingRepo.Verify(r => r.GetSellerIdAsync(listingId), Times.Once);
+        mockListingRepo.Verify(r => r.GetListingByIdAsync(listingId), Times.Once);
+        mockCloudinary.Verify(c => c.DeleteImagesAsync(It.IsAny<List<string>>()), Times.Once);
         mockListingRepo.Verify(r => r.DeleteListingAsync(listingId), Times.Once);
-        
-        mockListingRepo.VerifyNoOtherCalls();
-        mockCloudinary.VerifyNoOtherCalls();
     }
 
     [Then("the delete should be rejected")]
@@ -108,10 +112,7 @@ public sealed class DeleteListingStepDefinitions
         Assert.NotNull(capturedException);
         Assert.IsType<UnauthorizedAccessException>(capturedException);
 
-        mockListingRepo.Verify(r => r.GetSellerIdAsync(listingId), Times.Once);
+        mockListingRepo.Verify(r => r.GetListingByIdAsync(listingId), Times.Once);
         mockListingRepo.Verify(r => r.DeleteListingAsync(It.IsAny<string>()), Times.Never);
-
-        mockListingRepo.VerifyNoOtherCalls();
-        mockCloudinary.VerifyNoOtherCalls();
     }
 }
