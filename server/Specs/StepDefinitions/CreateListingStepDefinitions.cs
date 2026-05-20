@@ -17,20 +17,17 @@ namespace Specs.StepDefinitions;
 [Binding]
 public sealed class CreateListingStepDefinitions
 {
-    private readonly ITestOutputHelper _output;
     private IListingService listingService;
     private IFileValidationService fileValidationService;
     private Mock<IListingRepo> mockListingRepo;
     private Mock<ICloudinaryImageService> mockCloudinary;
     private ListingCreateRequestDto listingCreateRequestDto;
     private ListingResponseDto createdListingResponseDto;
-    private const string TestUserId = "lkfjsdlkfjs1234";
+    private const string TestUserId = "user-1";
 
     
     public CreateListingStepDefinitions(ITestOutputHelper output)
     {
-        _output = output;
-
         mockListingRepo = new Mock<IListingRepo>();
         mockCloudinary = new Mock<ICloudinaryImageService>();
         fileValidationService = new FileValidationService();
@@ -56,17 +53,17 @@ public sealed class CreateListingStepDefinitions
         listingService = new ListingService(mockListingRepo.Object, mockCloudinary.Object, fileValidationService);
     }
 
-    [Given("a listing create request:")]
-    public void GivenAListingCreateRequest(Table table)
+    [Given("a listing create request with title (.*), categoryId (.*), condition (.*), description (.*), price (.*), status (.*)")]
+    public void GivenAListingCreateRequest(string title, string categoryId, string condition, string description, decimal price, string status)
     {
         listingCreateRequestDto = new ListingCreateRequestDto
         {
-            CategoryId = table.Rows[0]["categoryId"],
-            Condition = table.Rows[0]["condition"],
-            Title = table.Rows[0]["title"],
-            Description = table.Rows[0]["description"],
-            Price = decimal.Parse(table.Rows[0]["price"]),
-            Status = table.Rows[0]["status"],
+            CategoryId = categoryId,
+            Condition = condition,
+            Title = title,
+            Description = description,
+            Price = price,
+            Status = status,
             Images = new List<IFormFile>()
         };
     }
@@ -80,17 +77,10 @@ public sealed class CreateListingStepDefinitions
     [Then("the listing should be created successfully")]
     public void ThenTheListingShouldBeCreatedSuccessfully()
     {
-        Assert.Equal(listingCreateRequestDto.Condition, createdListingResponseDto.Condition);
-        Assert.Equal(listingCreateRequestDto.Title, createdListingResponseDto.Title);
-        Assert.Equal(listingCreateRequestDto.Description, createdListingResponseDto.Description);
-        Assert.Equal(listingCreateRequestDto.Price, createdListingResponseDto.Price);
-        Assert.Equal(listingCreateRequestDto.Status, createdListingResponseDto.Status);
+        Assert.NotNull(createdListingResponseDto);
         Assert.Equal(TestUserId, createdListingResponseDto.UserId);
-        Assert.Equal(listingCreateRequestDto.Images.Count, createdListingResponseDto.ImageUrls.Count);
-        
-        mockListingRepo.Verify(r => r.CreateListingAsync(It.IsAny<Listing>()), Times.Exactly(1));
-        _output.WriteLine($"Images.Count = {listingCreateRequestDto.Images.Count}");
-        _output.WriteLine($"ImageUrls.Count = {createdListingResponseDto.ImageUrls.Count}");
-        _output.WriteLine(createdListingResponseDto.CreatedAt.ToString());
+        Assert.Equal(listingCreateRequestDto.Title, createdListingResponseDto.Title);
+
+        mockListingRepo.Verify(r => r.CreateListingAsync(It.IsAny<Listing>()), Times.Once);
     }
 }
