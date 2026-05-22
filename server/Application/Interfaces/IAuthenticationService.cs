@@ -5,9 +5,9 @@ namespace Application.Interfaces;
 
 public interface IAuthenticationService
 {
-    public AuthResponseDto Register(RegisterRequestDto dto);
-    public AuthResponseDto Login(AuthRequestDto dto);
-    public TfaSetupResponseDto SetupTfa(JwtClaims jwt);
-    public AuthResponseDto ValidateTfa(ValidateOtpRequestDto dto, JwtClaims jwt);
+    public Task<AuthResponseDto> Register(RegisterRequestDto dto);
+    public Task<AuthResponseDto> Login(AuthRequestDto dto);
+    public Task<TfaSetupResponseDto> SetupTfa(JwtClaims jwt);
+    public Task<AuthResponseDto> ValidateTfa(ValidateOtpRequestDto dto, JwtClaims jwt);
   
 }

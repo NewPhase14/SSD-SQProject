@@ -20,6 +20,7 @@ public class JwtServiceTests
     [Fact]
     public void GenerateJwt_ReturnsToken()
     {
+        // Act
         var token = _jwtService.GenerateJwt(new JwtClaims
         {
             Id = "1",
@@ -28,12 +29,14 @@ public class JwtServiceTests
             Exp = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds().ToString()
         });
 
+        // Assert
         Assert.False(string.IsNullOrWhiteSpace(token));
     }
 
     [Fact]
     public void GenerateJwt_AndVerify_ReturnsSameClaims()
     {
+        // Arrange
         var claims = new JwtClaims
         {
             Id = "1",
@@ -42,9 +45,11 @@ public class JwtServiceTests
             Exp = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds().ToString()
         };
 
+        // Act
         var token = _jwtService.GenerateJwt(claims);
         var result = _jwtService.VerifyJwtOrThrow(token);
 
+        // Assert
         Assert.Equal(claims.Id, result.Id);
         Assert.Equal(claims.Email, result.Email);
         Assert.Equal(claims.Type, result.Type);
@@ -54,6 +59,7 @@ public class JwtServiceTests
     [Fact]
     public void VerifyJwt_TamperedToken_Throws()
     {
+        // Arrange
         var token = _jwtService.GenerateJwt(new JwtClaims
         {
             Id = "1",
@@ -62,15 +68,15 @@ public class JwtServiceTests
             Exp = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds().ToString()
         });
 
-        var tampered = token + "abc";
-
+        // Act & Assert
         Assert.ThrowsAny<Exception>(() =>
-            _jwtService.VerifyJwtOrThrow(tampered));
+            _jwtService.VerifyJwtOrThrow(token + "abc"));
     }
 
     [Fact]
     public void VerifyJwt_ExpiredToken_Throws()
     {
+        // Arrange — set expiry in the past to simulate an expired token
         var token = _jwtService.GenerateJwt(new JwtClaims
         {
             Id = "1",
@@ -79,6 +85,7 @@ public class JwtServiceTests
             Exp = DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeSeconds().ToString()
         });
 
+        // Act & Assert
         Assert.Throws<AuthenticationException>(() =>
             _jwtService.VerifyJwtOrThrow(token));
     }

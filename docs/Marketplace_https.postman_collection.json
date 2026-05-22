@@ -1,0 +1,1837 @@
+{
+  "info": {
+    "_postman_id": "9836a8e4-1578-4bfa-b9d6-36af21bc7099",
+    "name": "Marketplace_https",
+    "description": "# Marketplace API — Test Collection\n\n## Environment variables\n\nThe collection relies on the following variables. Set `baseUrl` before running; all other variables are populated automatically by test scripts as the collection progresses.\n\n| Variable | Set by | Purpose |\n| --- | --- | --- |\n| `baseUrl` | You | Base URL of the API, e.g. `https://localhost:5001` |\n| `jwt` | Register / Login scripts | The **active** JWT used by the current request context |\n| `activeRole` | User A, B, C flows | Identifier to show activer user(Seller, buyer or attacker) |\n| `listingId` | Create listing | ID of the listing created by the Seller |\n| `conversationId` | Create conversation | ID of the conversation opened by the Buyer |\n\n## Recommended run order\n\nFolders **must** be executed in the order listed below. Each folder produces environment variables consumed by later folders.\n\n```\n1. User A - Seller          → registers, logs in, creates a listing\n2. User B - Buyer           → registers, logs in, starts a conversation & messaging\n3. User A - Seller          → seller replies and fetches messages\n4. User C - Attacker        → registers, then attempts unauthorized actions\n5. User D - 2FA tests       → standalone 2FA flow (can run independently)\n6. Validation tests         → standalone input-validation tests (can run independently)\n7. Get all listings         → Can only run if any listings exist\n\n ```\n\n## Notes\n\n- All requests use HTTPS (`{{baseUrl}}` should point to a TLS-enabled host).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "32172900"
+  },
+  "item": [
+    {
+      "name": "User A - Seller",
+      "item": [
+        {
+          "name": "Register User (Seller)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"JWT returned\", function () {",
+                  "    pm.expect(json.jwt).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"JWT has 3 parts\", function () {",
+                  "    pm.expect(json.jwt.split(\".\").length).to.eql(3);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"jwt\", json.jwt);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nikolaj Sørensen\",\n  \"email\": \"nikolaj@live.dk\",\n  \"password\": \"Nikolaj#1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/Register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "Register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login (Seller)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"JWT exists\", function () {",
+                  "    pm.expect(json.jwt).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"JWT has valid structure\", function () {",
+                  "    pm.expect(json.jwt.split(\".\").length).to.eql(3);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"jwt\", json.jwt);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nikolaj@live.dk\",\n  \"password\": \"Nikolaj#1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/Login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "Login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create listing (Seller)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Listing created\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Listing has id\", function () {",
+                  "    pm.expect(json.id).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"Listing contains title\", function () {",
+                  "    pm.expect(json.title).to.eql(\"Fiat 500\");",
+                  "});",
+                  "",
+                  "pm.test(\"Listing contains price\", function () {",
+                  "    pm.expect(json.price).to.eql(85000);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"listingId\", json.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "CategoryId",
+                  "type": "text",
+                  "uuid": "8bfbf6a7-df98-462e-8bdb-8ddf98a66ddf",
+                  "value": "d53f06f8-b961-4e42-8396-fae7f3bec3bd"
+                },
+                {
+                  "key": "Condition",
+                  "value": "Used",
+                  "type": "text",
+                  "uuid": "f89b3672-b197-4b20-b16c-b09ffd8ae0fa"
+                },
+                {
+                  "key": "Title",
+                  "value": "Fiat 500",
+                  "type": "text",
+                  "uuid": "c8253692-40cd-4f1d-b02f-e3acac8bd048"
+                },
+                {
+                  "key": "Description",
+                  "value": "Used car, but drives like brand new.",
+                  "type": "text",
+                  "uuid": "6fcd49e3-7a5a-4e66-8bfa-aa724adeb8b4"
+                },
+                {
+                  "key": "Price",
+                  "value": "85000",
+                  "type": "text",
+                  "uuid": "0021ad42-19e4-48ff-b5e1-31cc4c34ddfe"
+                },
+                {
+                  "key": "Status",
+                  "value": "Active",
+                  "type": "text",
+                  "uuid": "8a064284-09a4-49e2-901a-bd44ad656cf5"
+                },
+                {
+                  "key": "Images",
+                  "type": "file",
+                  "uuid": "fdf003ed-39a1-4b4f-9e4e-97e6f4355bbf",
+                  "src": "/Users/nikolaj/Downloads/fiat3.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/listing/Create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listing",
+                "Create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create conversation (Invalid)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Own listing conversation blocked\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(400);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"listingId\": \"{{listingId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/conversation/Create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "conversation",
+                "Create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get messages (Authorized)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Messages fetched\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Is array\", function () {",
+                  "    pm.expect(json).to.be.an(\"array\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/message/messages?conversationId={{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "message",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send message (Seller --> Buyer)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Message sent\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Message text returned\", function () {",
+                  "    pm.expect(json.text).to.eql(\"Hello, yes it's still available.\");",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"plainText\": \"Hello, yes it's still available.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/message/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "message",
+                "send"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete listing (Authorized)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Listing deleted\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"listingId\", \"\");",
+                  "pm.collectionVariables.set(\"conversationId\", \"\");",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/listing/Delete?listingId={{listingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listing",
+                "Delete"
+              ],
+              "query": [
+                {
+                  "key": "listingId",
+                  "value": "{{listingId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User (Seller)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"User deleted\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"jwt\", \"\");",
+                  "pm.collectionVariables.set(\"activeRole\", \"\");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/Delete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "Delete"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "## User A — Seller\n\n**Purpose:** Establishes the Seller identity and creates the core data (listing) that subsequent folders depend on.\n\n**Run order within this folder:**\n\n1. `Register User (Seller)` — creates the seller account; stores `sellerJwt`\n    \n2. `Login (Seller)` — re-authenticates and refreshes `sellerJwt` / `jwt`\n    \n3. `Create listing (Seller)` — creates a \"Fiat 500\" listing; stores `listingId`\n    \n4. `Create conversation (Invalid)` — verifies a seller **cannot** open a conversation on their own listing (expects 400)\n    \n5. `Get messages (Authorized)` — reads the message thread (empty at this point; expects 200 + array)\n    \n6. `Send message (Seller → Buyer)` — seller sends a reply after the buyer has initiated the conversation _(run this after User B folder)_\n    \n7. `Delete listing (Authorized)` — cleans up the listing created in step 3\n    \n8. `Delete User (Seller)` \\- removes the user completely along with all related data\n    \n\n**Note:** Step 3, requires an valid CategoryId from the database and insert image file from own computer.\n\n**Environment side-effects:** `sellerJwt`, `jwt`, `listingId`",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "pm.collectionVariables.set(\"activeRole\", \"seller\");",
+              ""
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "User B - Buyer",
+      "item": [
+        {
+          "name": "Register (Buyer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"JWT returned\", function () {",
+                  "    pm.expect(json.jwt).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"JWT has 3 parts\", function () {",
+                  "    pm.expect(json.jwt.split(\".\").length).to.eql(3);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"jwt\", json.jwt);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mads Hansen\",\n  \"email\": \"Mads@live.dk\",\n  \"password\": \"Mads#1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/Register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "Register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login (Buyer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"JWT exists\", function () {",
+                  "    pm.expect(json.jwt).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"JWT has valid structure\", function () {",
+                  "    pm.expect(json.jwt.split(\".\").length).to.eql(3);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"jwt\", json.jwt);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"Mads@live.dk\",\n  \"password\": \"Mads#1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/Login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "Login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create conversation (Buyer --> Seller)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Conversation created\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Conversation has id\", function () {",
+                  "    pm.expect(json.id).to.exist;",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"conversationId\", json.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"listingId\": \"{{listingId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/conversation/Create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "conversation",
+                "Create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send message (Buyer --> Seller)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Message sent\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Message text returned\", function () {",
+                  "    pm.expect(json.text).to.eql(\"Hello, is this item still available?\");",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"plainText\": \"Hello, is this item still available?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/message/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "message",
+                "send"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get messages (Authorized)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Messages fetched\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Response is array\", function () {",
+                  "    pm.expect(json).to.be.an(\"array\");",
+                  "});",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/message/messages?conversationId={{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "message",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User (Buyer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"User deleted\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"jwt\", \"\");",
+                  "pm.collectionVariables.set(\"activeRole\", \"\");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/Delete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "Delete"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "## User B — Buyer\n\n**Purpose:** Establishes the Buyer identity, initiates a conversation on the Seller's listing, and exercises the messaging flow from the buyer's perspective.\n\n**Run order within this folder:**\n\n1. `Register (Buyer)` — creates the buyer account; stores `buyerJwt`\n    \n2. `Login (Buyer)` — re-authenticates and refreshes `buyerJwt` / `jwt`\n    \n3. `Create conversation (Buyer → Seller)` — opens a conversation on `{{listingId}}`; stores `conversationId`\n    \n4. `Send message (Buyer → Seller)` — sends the opening message (\"Hello, is this item still available\")\n    \n5. `Get messages (Authorized)` — verifies the sent message is present in the thread\n    \n6. `Delete User (Buyer)` - removes the user completely along with all related data\n    \n\n**Depends on:** `listingId` set by User A folder.  \n**Environment side-effects:** `buyerJwt`, `jwt`, `conversationId`",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "pm.collectionVariables.set(\"activeRole\", \"buyer\");",
+              ""
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "User C - Attacker",
+      "item": [
+        {
+          "name": "Register User (Attacker)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"JWT returned\", function () {",
+                  "    pm.expect(json.jwt).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"JWT has 3 parts\", function () {",
+                  "    pm.expect(json.jwt.split(\".\").length).to.eql(3);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"jwt\", json.jwt);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Troels Lund\",\n  \"email\": \"Troels@live.dk\",\n  \"password\": \"Troels#1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/Register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "Register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login (Attacker)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"JWT exists\", function () {",
+                  "    pm.expect(json.jwt).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"JWT has valid structure\", function () {",
+                  "    pm.expect(json.jwt.split(\".\").length).to.eql(3);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"jwt\", json.jwt);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"troels@live.dk\",\n  \"password\": \"Troels#1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/Login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "Login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get messages (Unauthorized)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Unauthorized access blocked\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401,403]);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/message/messages?conversationId={{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "message",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete listing (Unauthorized)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Unauthorized delete blocked\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401,403]);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/listing/Delete?listingId={{listingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listing",
+                "Delete"
+              ],
+              "query": [
+                {
+                  "key": "listingId",
+                  "value": "{{listingId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User (Attacker)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"User deleted\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"jwt\", \"\");",
+                  "pm.collectionVariables.set(\"activeRole\", \"\");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/Delete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "Delete"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "## User C — Attacker\n\n**Purpose:** Verifies that authorization boundaries are enforced. The Attacker is a legitimately registered user who attempts to access resources they do not own.\n\n**Run order within this folder:**\n\n1. `Register User (Attacker)` — creates the attacker account; stores `attackerJwt`\n    \n2. `Login (Attacker)` — re-authenticates and refreshes `attackerJwt` / `jwt`\n    \n3. `Get messages (Unauthorized)` — tries to read `{{conversationId}}` (owned by Buyer/Seller); expects 401 or 403\n    \n4. `Delete listing (Unauthorized)` — tries to delete `{{listingId}}` (owned by Seller); expects 401 or 403\n    \n5. `Delete User (Attacker)` - removes the user completely along with all related data\n    \n\n**Depends on:** `conversationId` (User B) and `listingId` (User A).  \n**Environment side-effects:** `attackerJwt`, `jwt`",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "pm.collectionVariables.set(\"activeRole\", \"attacker\");",
+              ""
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "User D - 2FA tests",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"JWT returned\", function () {",
+                  "    pm.expect(json.jwt).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"JWT has 3 parts\", function () {",
+                  "    pm.expect(json.jwt.split(\".\").length).to.eql(3);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"jwt\", json.jwt);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Carl Heinz\",\n  \"email\": \"carl@live.dk\",\n  \"password\": \"Carl#1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/Register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "Register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Setup 2FA",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const contentType = pm.response.headers.get('Content-Type') || '';",
+                  "",
+                  "if (contentType.includes('application/json')) {",
+                  "  const data = pm.response.json();",
+                  "  pm.test('Response is valid JSON', function () {",
+                  "    pm.expect(data).to.exist;",
+                  "  });",
+                  "} else {",
+                  "  pm.test('Response is not JSON', function () {",
+                  "    pm.expect(contentType).to.include('image/');",
+                  "  });",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/SetupTfa",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "SetupTfa"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"JWT exists\", function () {",
+                  "    pm.expect(json.jwt).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"JWT has valid structure\", function () {",
+                  "    pm.expect(json.jwt.split(\".\").length).to.eql(3);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"jwt\", json.jwt);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"carl@live.dk\",\n  \"password\": \"Carl#1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/Login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "Login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Validate otp",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"JWT exists\", function () {",
+                  "    pm.expect(json.jwt).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"JWT has valid structure\", function () {",
+                  "    pm.expect(json.jwt.split(\".\").length).to.eql(3);",
+                  "});",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"235701\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/ValidateOtp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "ValidateOtp"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"User deleted\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"jwt\", \"\");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/Delete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "Delete"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "## User D — 2FA Tests\n\n**Purpose:** Validates the two-factor authentication (TOTP) setup and OTP validation flow. This folder is largely self-contained and can be run independently of Users A–C.\n\n**Run order within this folder:**\n\n1. `Register User` — creates account; stores `jwt`\n    \n2. `Setup 2FA` — requests a TOTP QR code; response must contain `qrCodeImage`\n    \n3. `Login` — authenticates the user\n    \n4. `Validate otp` — submits a TOTP code; expects HTTP 200 and a valid JWT\n    \n5. `Delete User` - removes the user completely along with all related data\n    \n\n**Note:**\n\nStep 2: Scan the qr code with an Authenticator app (e.g. Microsoft Authenticator). You will need to login afterwards, and now Two Factor Authentication is required. It will give you a temporary JWT-token, that last 5 minutes, that can be used with the `Validate otp` request.\n\nStep 3 requires a real TOTP code. This step will need a valid OTP value injected (Use Authenticator app e.g. Microsoft Authenticator).\n\n**Environment side-effects:** `jwt`",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "pm.collectionVariables.set(\"activeRole\", \"\");"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Validation tests",
+      "item": [
+        {
+          "name": "Login - Wrong password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Wrong email or password\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401,403]);",
+                  "});",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nikolaj@live.dk\",\n  \"password\": \"Nikolaj#1111\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/Login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "Login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - Invalid email format",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bad request - invalid email format\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Michael Jørgensen\",\n  \"email\": \"miso123.dk\",\n  \"password\": \"Miso#1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/Register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "Register"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "## Validation Tests — Input Validation\n\n**Purpose:** Verifies that the API enforces input validation rules and returns appropriate error codes for bad input. These tests are stateless and can be run independently.\n\n**Requests:**\n\n- `Login - Wrong password` — sends correct email(If User A exists) but wrong password; expects 401 or 403\n    \n- `Register - Invalid email format` — sends a invalid email address format during registration; expects HTTP 400",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "pm.collectionVariables.set(\"activeRole\", \"\");"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get all listings",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Listings fetched\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "",
+              "pm.test(\"Response is array\", function () {",
+              "    pm.expect(json).to.be.an(\"array\");",
+              "});",
+              "",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/listing/GetAll",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "listing",
+            "GetAll"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          "const jwt = pm.collectionVariables.get(\"jwt\");",
+          "",
+          "if (jwt) {",
+          "    pm.request.headers.upsert({ key: \"Authorization\", value: jwt });",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "",
+      "description": "Base URL of the API (e.g. https://localhost:5001). **Must be set manually** before running the collection."
+    },
+    {
+      "key": "jwt",
+      "value": "",
+      "description": "Active JWT token matching the current request."
+    },
+    {
+      "key": "activeRole",
+      "value": "",
+      "description": "Identifier to show activer user(Seller, buyer or attacker)"
+    },
+    {
+      "key": "listingId",
+      "value": "",
+      "description": "ID of the listing created by the Seller"
+    },
+    {
+      "key": "conversationId",
+      "value": "",
+      "description": "ID of the conversation created by the Buyer"
+    }
+  ]
+}

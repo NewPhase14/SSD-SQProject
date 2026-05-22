@@ -16,10 +16,9 @@ public class ConversationController(IConversationService conversationService, IJ
     public async Task<ActionResult<ConversationResponseDto>> GetOrCreateConversations([FromBody]ConversationCreateRequestDto dto, [FromHeader] string authorization)
     {
         var jwt = jwtService.VerifyJwtOrThrow(authorization);
-        if (jwt.Type == "Auth")
-        {
-            return Ok(await conversationService.GetOrCreateConversationAsync(dto, jwt.Id));
-        }
-        return Unauthorized();
+        if (jwt.Type != "Auth")
+            return Unauthorized();
+        
+        return Ok(await conversationService.GetOrCreateConversationAsync(dto, jwt.Id));
     }
 }

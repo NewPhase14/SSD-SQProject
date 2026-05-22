@@ -60,36 +60,41 @@ public class AuthenticationServiceTests
      * REGISTER TESTS
     */
     [Fact]
-    public void Register_NewUser_ReturnsJwt()
+    public async Task Register_NewUser_ReturnsJwt()
     {
+        // Arrange
         _mockUserRepo
-            .Setup(x => x.GetUserOrNull("morten@test.com"))
-            .Returns((User?)null);
+            .Setup(x => x.GetUserByEmailAsync("morten@test.com"))
+            .ReturnsAsync((User?)null);
 
         _mockUserRepo
-            .Setup(x => x.AddUser(It.IsAny<User>()))
-            .Returns<User>(u => u);
+            .Setup(x => x.AddUserAsync(It.IsAny<User>()))
+            .ReturnsAsync((User u) => u);
 
-        var result = _authenticationService.Register(new RegisterRequestDto
+        // Act
+        var result = await _authenticationService.Register(new RegisterRequestDto
         {
             Name = "Morten",
             Email = "morten@test.com",
             Password = "Password!123"
         });
 
+        // Assert
         Assert.NotNull(result.Jwt);
         Assert.NotEmpty(result.Jwt);
     }
     
     [Fact]
-    public void Register_ExistingUser_ThrowsValidationException()
+    public async Task Register_ExistingUser_ThrowsValidationException()
     {
+        // Arrange — repo returns an existing user, simulating a duplicate email
         _mockUserRepo
-            .Setup(x => x.GetUserOrNull(It.IsAny<string>()))
-            .Returns(new User());
+            .Setup(x => x.GetUserByEmailAsync(It.IsAny<string>()))
+            .ReturnsAsync(new User());
 
-        Assert.Throws<ValidationException>(() =>
-            _authenticationService.Register(new RegisterRequestDto
+        // Act & Assert
+        await Assert.ThrowsAsync<ValidationException>(async () =>
+            await _authenticationService.Register(new RegisterRequestDto
             {
                 Name = "Morten",
                 Email = "morten@test.com",
@@ -101,14 +106,15 @@ public class AuthenticationServiceTests
      * LOGIN TESTS
     */
     [Fact]
-    public void Login_ValidCredentials_ReturnsJwt()
+    public async Task Login_ValidCredentials_ReturnsJwt()
     {
+        // Arrange
         const string password = "Password!123";
         var hash = _passwordService.HashPassword(password);
 
         _mockUserRepo
-            .Setup(x => x.GetUserOrNull("morten@test.com"))
-            .Returns(new User
+            .Setup(x => x.GetUserByEmailAsync("morten@test.com"))
+            .ReturnsAsync(new User
             {
                 Id = "1",
                 Email = "morten@test.com",
@@ -116,31 +122,35 @@ public class AuthenticationServiceTests
                 IsTfaEnabled = false
             });
 
-        var result = _authenticationService.Login(new AuthRequestDto
+        // Act
+        var result = await _authenticationService.Login(new AuthRequestDto
         {
             Email = "morten@test.com",
             Password = password
         });
 
+        // Assert
         Assert.NotNull(result.Jwt);
         Assert.NotEmpty(result.Jwt);
     }
 
     [Fact]
-    public void Login_WrongPassword_ThrowsAuthenticationException()
+    public async Task Login_WrongPassword_ThrowsAuthenticationException()
     {
+        // Arrange
         var hash = _passwordService.HashPassword("Password!123");
 
         _mockUserRepo
-            .Setup(x => x.GetUserOrNull(It.IsAny<string>()))
-            .Returns(new User
+            .Setup(x => x.GetUserByEmailAsync(It.IsAny<string>()))
+            .ReturnsAsync(new User
             {
                 Email = "morten@test.com",
                 PasswordHash = hash
             });
 
-        Assert.Throws<AuthenticationException>(() =>
-            _authenticationService.Login(new AuthRequestDto
+        // Act & Assert
+        await Assert.ThrowsAsync<AuthenticationException>(async () =>
+            await _authenticationService.Login(new AuthRequestDto
             {
                 Email = "morten@test.com",
                 Password = "wrong"
@@ -148,14 +158,16 @@ public class AuthenticationServiceTests
     }
     
     [Fact]
-    public void Login_TfaEnabled_ReturnsTemporaryJwt()
+    public async Task Login_TfaEnabled_ReturnsTemporaryJwt()
     {
+        // Arrange — user has 2FA enabled, so login should return a short-lived 2FA token
+        // instead of a full Auth token. The client must complete the TOTP step to get an Auth token.
         const string password = "Password!123";
         var hash = _passwordService.HashPassword(password);
 
         _mockUserRepo
-            .Setup(x => x.GetUserOrNull(It.IsAny<string>()))
-            .Returns(new User
+            .Setup(x => x.GetUserByEmailAsync(It.IsAny<string>()))
+            .ReturnsAsync(new User
             {
                 Id = "1",
                 Email = "morten@test.com",
@@ -163,12 +175,14 @@ public class AuthenticationServiceTests
                 IsTfaEnabled = true
             });
 
-        var result = _authenticationService.Login(new AuthRequestDto
+        // Act
+        var result = await _authenticationService.Login(new AuthRequestDto
         {
             Email = "morten@test.com",
             Password = password
         });
 
+        // Assert — TfaIsRequired signals the client to prompt for a TOTP code
         Assert.True(result.TfaIsRequired);
         Assert.NotNull(result.Jwt);
     }
@@ -176,9 +190,11 @@ public class AuthenticationServiceTests
     /*
      * 2FA TESTS
     */
+    
     [Fact]
-    public void SetupTfa_ValidUser_ReturnsQrCode()
+    public async Task SetupTfa_ValidUser_ReturnsQrCode()
     {
+        // Arrange
         var user = new User
         {
             Id = "1",
@@ -187,32 +203,33 @@ public class AuthenticationServiceTests
         };
 
         _mockUserRepo
-            .Setup(x => x.GetUserOrNull("morten@test.com"))
-            .Returns(user);
+            .Setup(x => x.GetUserByEmailAsync("morten@test.com"))
+            .ReturnsAsync(user);
 
         _mockUserRepo
-            .Setup(x => x.UpdateUser(It.IsAny<User>()));
+            .Setup(x => x.UpdateUserAsync(It.IsAny<User>()))
+            .ReturnsAsync(user);
 
-        var result = _authenticationService.SetupTfa(new JwtClaims
+        // Act
+        var result = await _authenticationService.SetupTfa(new JwtClaims
         {
             Email = "morten@test.com",
             Id = "1",
             Exp = "123",
             Type = "2FA"
-            
         });
 
+        // Assert — QR code is returned as a PNG byte array for the client to display
         Assert.NotNull(result.QrCodeImage);
     }
     
     [Fact]
-    public void ValidateTfa_ValidCode_ReturnsJwt()
+    public async Task ValidateTfa_ValidCode_ReturnsJwt()
     {
+        // Arrange — encrypt the TOTP secret the same way the service does,
+        // so the service can decrypt and verify the TOTP code correctly
         var secret = KeyGeneration.GenerateRandomKey();
-
-        var encryptionKey = Convert.FromBase64String(
-            EncryptionOptions().CurrentValue.Key);
-
+        var encryptionKey = Convert.FromBase64String(EncryptionOptions().CurrentValue.Key);
         var encryptedSecret = _cryptoService.Encrypt(secret, encryptionKey);
 
         var user = new User
@@ -226,40 +243,29 @@ public class AuthenticationServiceTests
         };
 
         _mockUserRepo
-            .Setup(r => r.GetUserOrNull(user.Email))
-            .Returns(user);
+            .Setup(r => r.GetUserByEmailAsync(user.Email))
+            .ReturnsAsync(user);
 
         var totp = new Totp(secret);
         var validCode = totp.ComputeTotp();
 
-        var dto = new ValidateOtpRequestDto
-        {
-            Code = validCode
-        };
+        // Act
+        var result = await _authenticationService.ValidateTfa(
+            new ValidateOtpRequestDto { Code = validCode },
+            new JwtClaims { Email = user.Email, Id = "1", Exp = "123", Type = "2FA" });
 
-        var jwt = new JwtClaims
-        {
-            Email = user.Email,
-            Id = "1",
-            Exp = "123",
-            Type = "2FA"
-        };
-        
-        var result = _authenticationService.ValidateTfa(dto, jwt);
-        
+        // Assert
         Assert.NotNull(result);
         Assert.NotNull(result.Jwt);
         Assert.NotEmpty(result.Jwt);
     }
     
     [Fact]
-    public void ValidateTfa_InvalidCode_ThrowsInvalidOperationException()
+    public async Task ValidateTfa_InvalidCode_ThrowsInvalidOperationException()
     {
+        // Arrange — "000000" is an intentionally wrong TOTP code
         var secret = KeyGeneration.GenerateRandomKey();
-
-        var encryptionKey = Convert.FromBase64String(
-            EncryptionOptions().CurrentValue.Key);
-
+        var encryptionKey = Convert.FromBase64String(EncryptionOptions().CurrentValue.Key);
         var encryptedSecret = _cryptoService.Encrypt(secret, encryptionKey);
 
         var user = new User
@@ -273,22 +279,13 @@ public class AuthenticationServiceTests
         };
 
         _mockUserRepo
-            .Setup(r => r.GetUserOrNull(user.Email))
-            .Returns(user);
+            .Setup(r => r.GetUserByEmailAsync(user.Email))
+            .ReturnsAsync(user);
 
-        var dto = new ValidateOtpRequestDto
-        {
-            Code = "000000"
-        };
-
-        var jwt = new JwtClaims
-        {
-            Email = user.Email,
-            Id = "1",
-            Exp = "123",
-            Type = "2FA"
-        };
-        
-        Assert.Throws<InvalidOperationException>(() => _authenticationService.ValidateTfa(dto, jwt));
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await _authenticationService.ValidateTfa(
+                new ValidateOtpRequestDto { Code = "000000" },
+                new JwtClaims { Email = user.Email, Id = "1", Exp = "123", Type = "2FA" }));
     }
 }

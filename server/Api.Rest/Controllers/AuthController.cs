@@ -19,42 +19,40 @@ public class AuthController(IAuthenticationService authenticationService ,IJwtSe
 
     [HttpPost]
     [Route(LoginRoute)]
-    public ActionResult<AuthResponseDto> Login([FromBody] AuthRequestDto dto)
+    public async Task<ActionResult<AuthResponseDto>> Login([FromBody] AuthRequestDto dto)
     {
-        return Ok(authenticationService.Login(dto));
+        return Ok(await authenticationService.Login(dto));
     }
 
     [Route(RegisterRoute)]
     [HttpPost]
-    public ActionResult<AuthResponseDto> Register([FromBody] RegisterRequestDto dto)
+    public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterRequestDto dto)
     {
-        return Ok(authenticationService.Register(dto));
+        return Ok(await authenticationService.Register(dto));
     }
 
     [HttpPost]
     [Route(SetupTfaRoute)]
-    public ActionResult<TfaSetupResponseDto> SetupTfa([FromHeader] string authorization) 
+    public async Task<ActionResult<TfaSetupResponseDto>> SetupTfa([FromHeader] string authorization) 
     {
         var jwt = jwtService.VerifyJwtOrThrow(authorization);
-        if (jwt.Type == "Auth")
-        {
-            var responseDto = authenticationService.SetupTfa(jwt);
-            return File(responseDto.QrCodeImage, "image/png");
-        }
-        return Unauthorized();
+        if (jwt.Type != "Auth")
+            return Unauthorized();
+        
+        var responseDto = await authenticationService.SetupTfa(jwt);
+        return File(responseDto.QrCodeImage, "image/png");
     }
 
     [HttpPost]
     [Route(ValidateOtpRoute)]
-    public ActionResult<AuthResponseDto> ValidateOtp([FromBody] ValidateOtpRequestDto dto,
+    public async Task<ActionResult<AuthResponseDto>> ValidateOtp([FromBody] ValidateOtpRequestDto dto,
         [FromHeader] string authorization)
     {
         var jwt = jwtService.VerifyJwtOrThrow(authorization);
         if (jwt.Type != "2FA")
-        {
             return Unauthorized();
-        }
-        return Ok(authenticationService.ValidateTfa(dto, jwt));
+        
+        return Ok(await authenticationService.ValidateTfa(dto, jwt));
     }
     
 }
