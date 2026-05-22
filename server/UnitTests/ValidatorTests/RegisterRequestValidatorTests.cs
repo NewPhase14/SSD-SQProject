@@ -11,6 +11,7 @@ public class RegisterRequestValidatorTests
     [Fact]
     public void Password_ValidPassword_ShouldNotHaveValidationError()
     {
+        // Arrange
         var dto = new RegisterRequestDto
         {
             Name = "Morten",
@@ -18,14 +19,17 @@ public class RegisterRequestValidatorTests
             Password = "Password!123"
         };
 
+        // Act
         var result = _validator.TestValidate(dto);
 
+        // Assert
         result.ShouldNotHaveValidationErrorFor(x => x.Password);
     }
 
     [Fact]
     public void Password_Empty_ShouldHaveValidationError()
     {
+        // Arrange
         var dto = new RegisterRequestDto
         {
             Name = "Morten",
@@ -33,8 +37,10 @@ public class RegisterRequestValidatorTests
             Password = ""
         };
 
+        // Act
         var result = _validator.TestValidate(dto);
 
+        // Assert — empty password triggers the minimum length rule first
         result.ShouldHaveValidationErrorFor(x => x.Password)
             .WithErrorMessage("Password must be at least 8 characters long.");
     }
@@ -42,6 +48,7 @@ public class RegisterRequestValidatorTests
     [Fact]
     public void Password_TooShort_ShouldHaveValidationError()
     {
+        // Arrange — 6 characters, below the 8 character minimum
         var dto = new RegisterRequestDto
         {
             Name = "Morten",
@@ -49,8 +56,10 @@ public class RegisterRequestValidatorTests
             Password = "P!1abc"
         };
 
+        // Act
         var result = _validator.TestValidate(dto);
 
+        // Assert
         result.ShouldHaveValidationErrorFor(x => x.Password)
             .WithErrorMessage("Password must be at least 8 characters long.");
     }
@@ -58,6 +67,7 @@ public class RegisterRequestValidatorTests
     [Fact]
     public void Password_MissingUppercase_ShouldHaveValidationError()
     {
+        // Arrange — all lowercase letters
         var dto = new RegisterRequestDto
         {
             Name = "Morten",
@@ -65,8 +75,10 @@ public class RegisterRequestValidatorTests
             Password = "password!123"
         };
 
+        // Act
         var result = _validator.TestValidate(dto);
 
+        // Assert
         result.ShouldHaveValidationErrorFor(x => x.Password)
             .WithErrorMessage("Password must contain at least one uppercase letter.");
     }
@@ -74,6 +86,7 @@ public class RegisterRequestValidatorTests
     [Fact]
     public void Password_MissingLowercase_ShouldHaveValidationError()
     {
+        // Arrange — all uppercase letters
         var dto = new RegisterRequestDto
         {
             Name = "Morten",
@@ -81,8 +94,10 @@ public class RegisterRequestValidatorTests
             Password = "PASSWORD!123"
         };
 
+        // Act
         var result = _validator.TestValidate(dto);
 
+        // Assert
         result.ShouldHaveValidationErrorFor(x => x.Password)
             .WithErrorMessage("Password must contain at least one lowercase letter.");
     }
@@ -90,6 +105,7 @@ public class RegisterRequestValidatorTests
     [Fact]
     public void Password_MissingNumber_ShouldHaveValidationError()
     {
+        // Arrange — special characters present but no digits
         var dto = new RegisterRequestDto
         {
             Name = "Morten",
@@ -97,8 +113,10 @@ public class RegisterRequestValidatorTests
             Password = "Password!!!"
         };
 
+        // Act
         var result = _validator.TestValidate(dto);
 
+        // Assert
         result.ShouldHaveValidationErrorFor(x => x.Password)
             .WithErrorMessage("Password must contain at least one number.");
     }
@@ -106,6 +124,7 @@ public class RegisterRequestValidatorTests
     [Fact]
     public void Password_MissingSpecialCharacter_ShouldHaveValidationError()
     {
+        // Arrange — letters and numbers but no special character
         var dto = new RegisterRequestDto
         {
             Name = "Morten",
@@ -113,8 +132,10 @@ public class RegisterRequestValidatorTests
             Password = "Password123"
         };
 
+        // Act
         var result = _validator.TestValidate(dto);
 
+        // Assert
         result.ShouldHaveValidationErrorFor(x => x.Password)
             .WithErrorMessage("Password must contain at least one special character.");
     }

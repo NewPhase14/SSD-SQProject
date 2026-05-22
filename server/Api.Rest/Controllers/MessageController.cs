@@ -18,11 +18,10 @@ public class MessageController(IMessageService messageService, IJwtService jwtSe
     public async Task<IActionResult> GetMessages(string conversationId, [FromHeader] string authorization)
     {
         var jwt = jwtService.VerifyJwtOrThrow(authorization);
-        if (jwt.Type == "Auth")
-        {
-            return Ok(await messageService.GetMessagesAsync(conversationId, jwt.Id));
-        }
-        return Unauthorized();
+        if (jwt.Type != "Auth")
+            return Unauthorized();
+        
+        return Ok(await messageService.GetMessagesAsync(conversationId, jwt.Id));
     }
 
     [HttpPost]
@@ -30,11 +29,10 @@ public class MessageController(IMessageService messageService, IJwtService jwtSe
     public async Task<ActionResult<MessageResponseDto>> SendMessage([FromBody]MessageSendRequestDto dto, [FromHeader] string authorization)
     {
         var jwt = jwtService.VerifyJwtOrThrow(authorization);
-        if (jwt.Type == "Auth")
-        {
-            return Ok(await messageService.SendMessageAsync(dto, jwt.Id));
-        }
-        return Unauthorized();
+        if (jwt.Type != "Auth")
+            return Unauthorized();
+
+        return Ok(await messageService.SendMessageAsync(dto, jwt.Id));
     }
 
 }        

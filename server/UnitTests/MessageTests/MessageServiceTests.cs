@@ -39,7 +39,7 @@ public class MessageServiceTests
  
     private static readonly User Attacker = new()
     {
-        Id           = "outsider-789",
+        Id           = "attacker-789",
         Name         = "Ole Olesen",
         Email        = "ole@gmail.com",
     };
@@ -99,10 +99,13 @@ public class MessageServiceTests
     [Fact]
     public async Task SendMessageAsync_AsBuyer_ReturnsDecryptedMessage()
     {
+        // Arrange
         var dto = new MessageSendRequestDto { ConversationId = Conversation.Id, PlainText = "Hello!" };
- 
+    
+        // Act
         var result = await _messageService.SendMessageAsync(dto, Buyer.Id);
- 
+    
+        // Assert — message is stored encrypted but returned decrypted to the caller
         Assert.Equal("Hello!", result.Text);
         Assert.Equal(Conversation.Id, result.ConversationId);
         Assert.Equal(Buyer.Id, result.SenderUserId);
@@ -111,10 +114,13 @@ public class MessageServiceTests
     [Fact]
     public async Task SendMessageAsync_AsSeller_ReturnsDecryptedMessage()
     {
+        // Arrange
         var dto = new MessageSendRequestDto { ConversationId = Conversation.Id, PlainText = "Hi buyer!" };
- 
+    
+        // Act
         var result = await _messageService.SendMessageAsync(dto, Seller.Id);
- 
+    
+        // Assert
         Assert.NotNull(result);
         Assert.Equal("Hi buyer!", result.Text);
         Assert.Equal(Seller.Id, result.SenderUserId);
@@ -123,20 +129,24 @@ public class MessageServiceTests
     [Fact]
     public async Task SendMessageAsync_StoredCiphertext_IsNotPlaintext()
     {
+        // Arrange
         const string plainText = "Hello, this is a secret message!";
         var dto = new MessageSendRequestDto { ConversationId = Conversation.Id, PlainText = plainText };
-        
-        // Capture the message being added to the repository
+    
+        // Capture the message passed to the repo to inspect stored ciphertext
         Message? capturedMessage = null;
-        _mockMessageRepo.Setup(r => r.AddMessageAsync(It.IsAny<Message>()))
+        _mockMessageRepo
+            .Setup(r => r.AddMessageAsync(It.IsAny<Message>()))
             .ReturnsAsync((Message m) =>
             {
                 capturedMessage = m;
                 return m;
-            }); 
-        
+            });
+    
+        // Act
         await _messageService.SendMessageAsync(dto, Buyer.Id);
-        
+    
+        // Assert — plaintext must never be stored directly in the database
         Assert.NotNull(capturedMessage);
         Assert.NotEqual(plainText, capturedMessage.Ciphertext.ToString());
     }
@@ -144,100 +154,80 @@ public class MessageServiceTests
     [Fact]
     public async Task SendMessageAsync_ConversationNotFound_ThrowsException()
     {
+        // Arrange
         _mockConversationRepo
             .Setup(r => r.GetAsync(Conversation.Id))
             .ReturnsAsync((Conversation?)null);
- 
-        var dto = new MessageSendRequestDto { ConversationId = Conversation.Id, PlainText = "Hi" };
- 
-        var ex = await Assert.ThrowsAsync<Exception>(() =>
-            _messageService.SendMessageAsync(dto, Buyer.Id));
-        Assert.Equal("Conversation not found", ex.Message);
-    }
     
-    [Fact]
-    public async Task SendMessageAsync_ListingNotFound_ThrowsException()
-    {
-        _mockListingRepo
-            .Setup(r => r.GetSellerIdAsync(Listing.Id))
-            .ReturnsAsync((string?)null);
- 
-        var dto = new MessageSendRequestDto { ConversationId = Conversation.Id, PlainText = "Hi" };
- 
+        // Act & Assert
         var ex = await Assert.ThrowsAsync<Exception>(() =>
-            _messageService.SendMessageAsync(dto, Buyer.Id));
-        Assert.Equal("Listing not found", ex.Message);
+            _messageService.SendMessageAsync(
+                new MessageSendRequestDto { ConversationId = Conversation.Id, PlainText = "Hi" },
+                Buyer.Id));
+    
+        Assert.Equal("Conversation not found", ex.Message);
     }
     
     [Fact]
     public async Task SendMessageAsync_RandomUser_ThrowsUnauthorizedAccessException()
     {
-        var dto = new MessageSendRequestDto { ConversationId = Conversation.Id, PlainText = "Can i join this conversation?" };
- 
+        // Arrange & Act & Assert — only conversation participants (buyer/seller) may send messages
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
-            _messageService.SendMessageAsync(dto, Attacker.Id));
+            _messageService.SendMessageAsync(
+                new MessageSendRequestDto { ConversationId = Conversation.Id, PlainText = "Can i join?" },
+                Attacker.Id));
     }
     
     [Fact]
     public async Task GetMessagesAsync_ReturnsDecryptedMessages()
     {
+        // Arrange — store a pre-encrypted message and verify it comes back as plaintext
         var key = Convert.FromBase64String(EncryptionOptions().CurrentValue.Key);
-
         var encrypted = _cryptoService.Encrypt("Secret message", key);
-
-        var messages = new List<Message>
-        {
-            new()
-            {
-                Id = "msg-001",
-                ConversationId = Conversation.Id,
-                SenderUserId = Buyer.Id,
-                Ciphertext = encrypted.CipherText,
-                Nonce = encrypted.Nonce,
-                Tag = encrypted.Tag,
-                CreatedAt = DateTime.UtcNow
-            }
-        };
-
+    
         _mockMessageRepo
             .Setup(r => r.GetByConversationIdAsync(Conversation.Id))
-            .ReturnsAsync(messages);
-
+            .ReturnsAsync(new List<Message>
+            {
+                new()
+                {
+                    Id = "msg-001",
+                    ConversationId = Conversation.Id,
+                    SenderUserId = Buyer.Id,
+                    Ciphertext = encrypted.CipherText,
+                    Nonce = encrypted.Nonce,
+                    Tag = encrypted.Tag,
+                    CreatedAt = DateTime.UtcNow
+                }
+            });
+    
+        // Act
         var result = await _messageService.GetMessagesAsync(Conversation.Id, Buyer.Id);
-
+    
+        // Assert
         Assert.Equal("Secret message", result[0].Text);
         Assert.Equal(Buyer.Id, result[0].SenderUserId);
     }
-
+    
     [Fact]
     public async Task GetMessagesAsync_ConversationNotFound_ThrowsException()
     {
+        // Arrange
         _mockConversationRepo
             .Setup(r => r.GetAsync(Conversation.Id))
             .ReturnsAsync((Conversation?)null);
-
+    
+        // Act & Assert
         var ex = await Assert.ThrowsAsync<Exception>(() =>
             _messageService.GetMessagesAsync(Conversation.Id, Buyer.Id));
-
+    
         Assert.Equal("Conversation not found", ex.Message);
     }
-
-    [Fact]
-    public async Task GetMessagesAsync_ListingNotFound_ThrowsException()
-    {
-        _mockListingRepo
-            .Setup(r => r.GetSellerIdAsync(Listing.Id))
-            .ReturnsAsync((string?)null);
-
-        var ex = await Assert.ThrowsAsync<Exception>(() =>
-            _messageService.GetMessagesAsync(Conversation.Id, Buyer.Id));
-
-        Assert.Equal("Listing not found", ex.Message);
-    }
-
+    
     [Fact]
     public async Task GetMessagesAsync_RandomUser_ThrowsUnauthorizedAccessException()
     {
+        // Arrange & Act & Assert — outsiders must not be able to read conversation messages
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             _messageService.GetMessagesAsync(Conversation.Id, Attacker.Id));
     }

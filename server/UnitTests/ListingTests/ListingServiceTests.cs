@@ -1,3 +1,4 @@
+using System.Text;
 using Application.Interfaces;
 using Application.Interfaces.Infrastructure.Postgres;
 using Application.Models.Dtos.Cloudinary;
@@ -32,13 +33,11 @@ public class ListingServiceTests
     [Fact]
     public async Task CreateListingAsync_ValidInput_ReturnsCreatedListing()
     {
+        // Arrange — mock a valid image file
+        var ms = new MemoryStream(Encoding.UTF8.GetBytes("fake image content"));
         var fileMock = new Mock<IFormFile>();
-        var content = "fake image content";
-        var fileName = "test.jpg";
-        var ms = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
-
         fileMock.Setup(f => f.OpenReadStream()).Returns(ms);
-        fileMock.Setup(f => f.FileName).Returns(fileName);
+        fileMock.Setup(f => f.FileName).Returns("test.jpg");
         fileMock.Setup(f => f.Length).Returns(ms.Length);
         fileMock.Setup(f => f.ContentType).Returns("image/jpeg");
 
@@ -54,7 +53,8 @@ public class ListingServiceTests
             .Setup(x => x.CreateListingAsync(It.IsAny<Listing>()))
             .ReturnsAsync((Listing listing) => listing);
 
-        var dto = new ListingCreateRequestDto
+        // Act
+        var result = await _listingService.CreateListingAsync(new ListingCreateRequestDto
         {
             CategoryId = "cat-1",
             Condition = "Used",
@@ -63,19 +63,16 @@ public class ListingServiceTests
             Price = 1000,
             Status = "Active",
             Images = [fileMock.Object]
-        };
+        }, "user-1");
 
-        var result = await _listingService.CreateListingAsync(dto, "user-1");
-
+        // Assert
         Assert.NotNull(result);
         Assert.Equal("Laptop", result.Title);
         Assert.Single(result.ImageUrls);
 
+        // Verify validation and upload were both called exactly once
         _mockFileValidationService.Verify(
-            x => x.ValidateImageAsync(
-                It.IsAny<Stream>(),
-                It.IsAny<string>(),
-                It.IsAny<string>()),
+            x => x.ValidateImageAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>()),
             Times.Once);
 
         _mockCloudinaryImageService.Verify(
@@ -86,32 +83,29 @@ public class ListingServiceTests
     [Fact]
     public async Task CreateListingAsync_InvalidFile_ThrowsException()
     {
+        // Arrange — file validation rejects the file before it reaches Cloudinary
         var fileMock = new Mock<IFormFile>();
-
         fileMock.Setup(f => f.OpenReadStream()).Returns(new MemoryStream());
         fileMock.Setup(f => f.FileName).Returns("virus.exe");
         fileMock.Setup(f => f.Length).Returns(100);
         fileMock.Setup(f => f.ContentType).Returns("application/octet-stream");
 
         _mockFileValidationService
-            .Setup(x => x.ValidateImageAsync(
-                It.IsAny<Stream>(),
-                It.IsAny<string>(),
-                It.IsAny<string>()))
+            .Setup(x => x.ValidateImageAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>()))
             .ThrowsAsync(new InvalidOperationException("Invalid file"));
 
-        var dto = new ListingCreateRequestDto
-        {
-            Images = [fileMock.Object]
-        };
-
+        // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _listingService.CreateListingAsync(dto, "user-1"));
+            _listingService.CreateListingAsync(new ListingCreateRequestDto
+            {
+                Images = [fileMock.Object]
+            }, "user-1"));
     }
     
     [Fact]
     public async Task DeleteListingAsync_DeletesCloudinaryImages()
     {
+        // Arrange — listing has two images that must be cleaned up from Cloudinary on delete
         var listing = new Listing
         {
             Id = "listing-1",
@@ -131,10 +125,11 @@ public class ListingServiceTests
             .Setup(x => x.DeleteListingAsync("listing-1"))
             .ReturnsAsync(listing);
 
+        // Act
         var result = await _listingService.DeleteListingAsync("listing-1", "owner-1");
 
+        // Assert — both Cloudinary public IDs must be passed to the delete call
         Assert.NotNull(result);
-
         _mockCloudinaryImageService.Verify(
             x => x.DeleteImagesAsync(It.Is<List<string>>(ids =>
                 ids.Contains("img-1") && ids.Contains("img-2"))),

@@ -11,22 +11,22 @@ using QRCoder;
 
 namespace Application.Services;
 
-public class AuthenticationService(IUserRepo repo,
+public class AuthenticationService(IUserRepo userRepo,
     IPasswordService passwordService,
     IJwtService jwtService, ICryptoService cryptoService,
     IOptionsMonitor<TfaOptions> tfaOptions,
     IOptionsMonitor<Encryption> encryptionOptions ) : IAuthenticationService
 {
-    public AuthResponseDto Register(RegisterRequestDto dto)
+    public async Task<AuthResponseDto> Register(RegisterRequestDto dto)
     {
         var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
         
-        var existingUser = repo.GetUserOrNull(normalizedEmail);
+        var existingUser = await userRepo.GetUserByEmailAsync(normalizedEmail);
         if (existingUser is not null) throw new ValidationException("User already exists");
         
         var hash = passwordService.HashPassword(dto.Password);
         
-        var insertedUser = repo.AddUser(new User
+        var insertedUser = await userRepo.AddUserAsync(new User
         {
             Id = Guid.NewGuid().ToString(),
             Name = dto.Name,
@@ -45,11 +45,11 @@ public class AuthenticationService(IUserRepo repo,
         };
     }
 
-    public AuthResponseDto Login(AuthRequestDto dto)
+    public async Task<AuthResponseDto> Login(AuthRequestDto dto)
     {
         var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
         
-        var user = repo.GetUserOrNull(normalizedEmail) ?? throw new ValidationException("Wrong email or password");
+        var user = await userRepo.GetUserByEmailAsync(normalizedEmail) ?? throw new ValidationException("Wrong email or password");
         passwordService.VerifyPasswordOrThrow(dto.Password, user.PasswordHash);
 
         if (user.IsTfaEnabled)
@@ -83,7 +83,7 @@ public class AuthenticationService(IUserRepo repo,
         };
     }
     
-    public TfaSetupResponseDto SetupTfa(JwtClaims jwt)
+    public async Task<TfaSetupResponseDto> SetupTfa(JwtClaims jwt)
     {
         var key = KeyGeneration.GenerateRandomKey();
 
@@ -91,7 +91,7 @@ public class AuthenticationService(IUserRepo repo,
             jwt.Email,
             key);
 
-        var user = repo.GetUserOrNull(jwt.Email)
+        var user = await userRepo.GetUserByEmailAsync(jwt.Email)
                    ?? throw new InvalidOperationException(
                        "User not found");
 
@@ -110,7 +110,7 @@ public class AuthenticationService(IUserRepo repo,
         user.Tag = encryptedTfa.Tag;
         user.Nonce = encryptedTfa.Nonce;
 
-        repo.UpdateUser(user);
+        await userRepo.UpdateUserAsync(user);
 
         return new TfaSetupResponseDto
         {
@@ -118,9 +118,9 @@ public class AuthenticationService(IUserRepo repo,
         };
     }
 
-    public AuthResponseDto ValidateTfa(ValidateOtpRequestDto dto, JwtClaims jwt)
+    public async Task<AuthResponseDto> ValidateTfa(ValidateOtpRequestDto dto, JwtClaims jwt)
     {
-        var user = repo.GetUserOrNull(jwt.Email) ?? throw new InvalidOperationException("User not found");
+        var user = await userRepo.GetUserByEmailAsync(jwt.Email) ?? throw new InvalidOperationException("User not found");
         if (user.TfaSecret is null || !user.IsTfaEnabled || user.Nonce is null || user.Tag is null) throw new InvalidOperationException("2FA not set up for this user");
         
         var encryptedMessage = new EncryptedMessage(

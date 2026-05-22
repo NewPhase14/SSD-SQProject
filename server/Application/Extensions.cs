@@ -5,6 +5,7 @@ using Application.Validators.Auth;
 using Application.Validators.Conversations;
 using Application.Validators.Listings;
 using Application.Validators.Messages;
+using Application.Validators.Users;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +25,7 @@ public static class Extensions
         services.AddScoped<IListingService, ListingService>();
         services.AddScoped<ICloudinaryImageService, CloudinaryImageService>();
         services.AddScoped<IFileValidationService, FileValidationService>();
+        services.AddScoped<IUserService, UserService>();
         
         
         //Validators
@@ -34,6 +36,7 @@ public static class Extensions
         services.AddValidatorsFromAssemblyContaining<ListingUpdateRequestValidator>();
         services.AddValidatorsFromAssemblyContaining<AuthRequestValidator>();
         services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
+        services.AddValidatorsFromAssemblyContaining<UserUpdateRequestValidator>();
         
         return services;
     }

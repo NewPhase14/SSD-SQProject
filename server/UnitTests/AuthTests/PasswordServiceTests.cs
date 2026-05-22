@@ -10,40 +10,46 @@ public class PasswordServiceTests
     [Fact]
     public void HashPassword_ValidPassword_ReturnsThreePartString()
     {
+        // Act
         var hash = _passwordService.HashPassword("Password!123");
-
         var parts = hash.Split('$');
+        
+        // Assert
         Assert.Equal(3, parts.Length);
-    }
-
-    [Fact]
-    public void HasPassword_SamePassword_ReturnsDifferentHashes()
-    {
-        var hash1 = _passwordService.HashPassword("Password!123");
-        var hash2 = _passwordService.HashPassword("Password!123");
-
-        Assert.NotEqual(hash1, hash2);
     }
     
     [Fact]
+    public void HashPassword_SamePassword_ReturnsDifferentHashes()
+    {
+        // Act — hash the same password twice; Argon2id uses a random salt each time
+        var hash1 = _passwordService.HashPassword("Password!123");
+        var hash2 = _passwordService.HashPassword("Password!123");
+
+        // Assert — different salts must produce different hashes
+        Assert.NotEqual(hash1, hash2);
+    }
+
+    [Fact]
     public void VerifyPasswordOrThrow_CorrectPassword_DoesNotThrow()
     {
-        const string password = "Password!123";
-        var hash = _passwordService.HashPassword(password);
+        // Arrange
+        var hash = _passwordService.HashPassword("Password!123");
 
-        var exception = Record.Exception(() => _passwordService.VerifyPasswordOrThrow(password, hash));
+        // Act & Assert
+        var exception = Record.Exception(() =>
+            _passwordService.VerifyPasswordOrThrow("Password!123", hash));
+
         Assert.Null(exception);
     }
 
     [Fact]
     public void VerifyPasswordOrThrow_WrongPassword_ThrowsAuthenticationException()
     {
-        const string password = "Password!123";
-        const string wrongPassword = "WrongPassword!123";
-        
-        var hash = _passwordService.HashPassword(password);
-        
+        // Arrange
+        var hash = _passwordService.HashPassword("Password!123");
+
+        // Act & Assert
         Assert.Throws<AuthenticationException>(() =>
-            _passwordService.VerifyPasswordOrThrow(wrongPassword, hash));
+            _passwordService.VerifyPasswordOrThrow("WrongPassword!123", hash));
     }
 }

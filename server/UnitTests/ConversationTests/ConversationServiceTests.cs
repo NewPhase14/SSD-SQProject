@@ -55,82 +55,71 @@ public class ConversationServiceTests
     [Fact]
     public async Task GetOrCreateConversationAsync_ReturnsExistingConversation()
     {
+        // Arrange — conversation already exists, no new one should be created
         _mockConversationRepo
             .Setup(r => r.GetByListingAndBuyerAsync(Listing.Id, Buyer.Id))
             .ReturnsAsync(ExistingConversation);
-
-        var dto = new ConversationCreateRequestDto
-        {
-            ListingId = Listing.Id
-        };
-
+    
+        // Act
         var result = await _conversationService
-            .GetOrCreateConversationAsync(dto, Buyer.Id);
-
+            .GetOrCreateConversationAsync(new ConversationCreateRequestDto { ListingId = Listing.Id }, Buyer.Id);
+    
+        // Assert
         Assert.NotNull(result);
         Assert.Equal(ExistingConversation.Id, result.Id);
         Assert.Equal(Buyer.Id, result.BuyerUserId);
         Assert.Equal(Seller.Id, result.SellerUserId);
     }
-
+    
     [Fact]
     public async Task GetOrCreateConversationAsync_CreatesNewConversation()
     {
+        // Arrange — no existing conversation, so a new one should be created
         _mockConversationRepo
             .Setup(r => r.GetByListingAndBuyerAsync(Listing.Id, Buyer.Id))
             .ReturnsAsync((Conversation?)null);
-
+    
         _mockConversationRepo
             .Setup(r => r.CreateAsync(It.IsAny<Conversation>()))
             .ReturnsAsync((Conversation c) => c);
-
-        var dto = new ConversationCreateRequestDto
-        {
-            ListingId = Listing.Id
-        };
-
+    
+        // Act
         var result = await _conversationService
-            .GetOrCreateConversationAsync(dto, Buyer.Id);
-
+            .GetOrCreateConversationAsync(new ConversationCreateRequestDto { ListingId = Listing.Id }, Buyer.Id);
+    
+        // Assert
         Assert.NotNull(result);
         Assert.Equal(Listing.Id, result.ListingId);
         Assert.Equal(Buyer.Id, result.BuyerUserId);
         Assert.Equal(Seller.Id, result.SellerUserId);
-
-        _mockConversationRepo.Verify(
-            r => r.CreateAsync(It.IsAny<Conversation>()),
-            Times.Once);
+    
+        _mockConversationRepo.Verify(r => r.CreateAsync(It.IsAny<Conversation>()), Times.Once);
     }
-
+    
     [Fact]
     public async Task GetOrCreateConversationAsync_ListingNotFound_ThrowsException()
     {
+        // Arrange
         _mockListingRepo
             .Setup(r => r.GetSellerIdAsync(Listing.Id))
             .ReturnsAsync((string?)null);
-
-        var dto = new ConversationCreateRequestDto
-        {
-            ListingId = Listing.Id
-        };
-
+    
+        // Act & Assert
         var ex = await Assert.ThrowsAsync<Exception>(() =>
-            _conversationService.GetOrCreateConversationAsync(dto, Buyer.Id));
-
+            _conversationService.GetOrCreateConversationAsync(
+                new ConversationCreateRequestDto { ListingId = Listing.Id }, Buyer.Id));
+    
         Assert.Equal("Listing not found", ex.Message);
     }
-
+    
     [Fact]
     public async Task GetOrCreateConversationAsync_OwnListing_ThrowsInvalidOperationException()
     {
-        var dto = new ConversationCreateRequestDto
-        {
-            ListingId = Listing.Id
-        };
-
+        // Arrange & Act & Assert — a seller must not be able to message themselves
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _conversationService.GetOrCreateConversationAsync(dto, Seller.Id));
-
+            _conversationService.GetOrCreateConversationAsync(
+                new ConversationCreateRequestDto { ListingId = Listing.Id }, Seller.Id));
+    
         Assert.Equal("Cannot create conversation with own listing", ex.Message);
     }
 }
