@@ -4,11 +4,13 @@ namespace Application.Interfaces.Infrastructure.Postgres;
 
 public interface IConversationRepo
 {
-    Task<Conversation?> GetAsync(string conversationId);
+    Task<Conversation?> GetConversationAsync(string conversationId);
 
-    Task<Conversation?> GetByListingAndBuyerAsync(
+    Task<Conversation?> GetConversationByListingAndBuyerAsync(
         string listingId,
         string buyerUserId);
 
-    Task<Conversation> CreateAsync(Conversation conversation);
+    Task<Conversation> CreateConversationAsync(Conversation conversation);
+    
+    Task<List<Conversation>> GetAllConversationsByUserIdAsync(string userId);
 }

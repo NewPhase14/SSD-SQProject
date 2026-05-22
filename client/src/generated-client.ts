@@ -164,6 +164,50 @@ export class AuthClient {
     }
 }
 
+export class CategoryClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    getCategories(): Promise<CategoryResponseDto[]> {
+        let url_ = this.baseUrl + "/api/categoryGetCategories";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetCategories(_response);
+        });
+    }
+
+    protected processGetCategories(response: Response): Promise<CategoryResponseDto[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CategoryResponseDto[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<CategoryResponseDto[]>(null as any);
+    }
+}
+
 export class ConversationClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -210,6 +254,40 @@ export class ConversationClient {
             });
         }
         return Promise.resolve<ConversationResponseDto>(null as any);
+    }
+
+    getOwnConversations(authorization: string | undefined): Promise<ConversationResponseDto[]> {
+        let url_ = this.baseUrl + "/api/conversationGetOwnConversations";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetOwnConversations(_response);
+        });
+    }
+
+    protected processGetOwnConversations(response: Response): Promise<ConversationResponseDto[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ConversationResponseDto[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ConversationResponseDto[]>(null as any);
     }
 }
 
@@ -418,6 +496,43 @@ export class ListingClient {
         }
         return Promise.resolve<ListingResponseDto[]>(null as any);
     }
+
+    getListingById(listingId: string | undefined): Promise<ListingResponseDto> {
+        let url_ = this.baseUrl + "/api/listing/GetListingById?";
+        if (listingId === null)
+            throw new globalThis.Error("The parameter 'listingId' cannot be null.");
+        else if (listingId !== undefined)
+            url_ += "listingId=" + encodeURIComponent("" + listingId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetListingById(_response);
+        });
+    }
+
+    protected processGetListingById(response: Response): Promise<ListingResponseDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ListingResponseDto;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ListingResponseDto>(null as any);
+    }
 }
 
 export class MessageClient {
@@ -430,7 +545,7 @@ export class MessageClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    getMessages(conversationId: string | undefined, authorization: string | undefined): Promise<FileResponse> {
+    getMessages(conversationId: string | undefined, authorization: string | undefined): Promise<MessageResponseDto[]> {
         let url_ = this.baseUrl + "/api/message/messages?";
         if (conversationId === null)
             throw new globalThis.Error("The parameter 'conversationId' cannot be null.");
@@ -442,7 +557,7 @@ export class MessageClient {
             method: "GET",
             headers: {
                 "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
-                "Accept": "application/octet-stream"
+                "Accept": "application/json"
             }
         };
 
@@ -451,26 +566,21 @@ export class MessageClient {
         });
     }
 
-    protected processGetMessages(response: Response): Promise<FileResponse> {
+    protected processGetMessages(response: Response): Promise<MessageResponseDto[]> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as MessageResponseDto[];
+            return result200;
+            });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<FileResponse>(null as any);
+        return Promise.resolve<MessageResponseDto[]>(null as any);
     }
 
     sendMessage(dto: MessageSendRequestDto, authorization: string | undefined): Promise<MessageResponseDto> {
@@ -520,6 +630,40 @@ export class UserClient {
     constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
         this.http = http ? http : window as any;
         this.baseUrl = baseUrl ?? "";
+    }
+
+    getUserByEmail(authorization: string | undefined): Promise<UserResponseDto> {
+        let url_ = this.baseUrl + "/api/user/GetUserByEmail";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "authorization": authorization !== undefined && authorization !== null ? "" + authorization : "",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetUserByEmail(_response);
+        });
+    }
+
+    protected processGetUserByEmail(response: Response): Promise<UserResponseDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserResponseDto;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<UserResponseDto>(null as any);
     }
 
     update(dto: UserUpdateRequestDto, authorization: string | undefined): Promise<UserResponseDto> {
@@ -619,6 +763,11 @@ export interface ValidateOtpRequestDto {
     code?: string;
 }
 
+export interface CategoryResponseDto {
+    id?: string;
+    name?: string;
+}
+
 export interface ConversationResponseDto {
     id?: string;
     listingId?: string;
@@ -684,13 +833,6 @@ export interface UserUpdateRequestDto {
 export interface FileParameter {
     data: any;
     fileName: string;
-}
-
-export interface FileResponse {
-    data: Blob;
-    status: number;
-    fileName?: string;
-    headers?: { [name: string]: any };
 }
 
 export class ApiException extends Error {

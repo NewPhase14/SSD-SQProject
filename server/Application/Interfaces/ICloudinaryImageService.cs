@@ -4,7 +4,7 @@ namespace Application.Interfaces;
 
 public interface ICloudinaryImageService
 {
-    Task<CloudinaryUploadResponseDto> UploadImageAsync(Stream fileStream, string fileName);
+    public Task<CloudinaryUploadResponseDto> UploadImageAsync(Stream fileStream, string fileName);
 
-    Task DeleteImagesAsync(List<string> publicIds);
+    public Task DeleteImagesAsync(List<string> publicIds);
 }

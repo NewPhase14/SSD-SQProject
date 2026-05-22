@@ -18,7 +18,7 @@ public class ConversationService(IConversationRepo conversationRepo, IListingRep
             throw new InvalidOperationException("Cannot create conversation with own listing");
         
         var existingConversation = await 
-            conversationRepo.GetByListingAndBuyerAsync(dto.ListingId, userId);
+            conversationRepo.GetConversationByListingAndBuyerAsync(dto.ListingId, userId);
 
         if (existingConversation != null)
         {
@@ -38,7 +38,7 @@ public class ConversationService(IConversationRepo conversationRepo, IListingRep
             BuyerUserId = userId,
         };
 
-        var newConversation = await conversationRepo.CreateAsync(conversation);
+        var newConversation = await conversationRepo.CreateConversationAsync(conversation);
         
         return new ConversationResponseDto()
         {
@@ -47,5 +47,34 @@ public class ConversationService(IConversationRepo conversationRepo, IListingRep
             BuyerUserId = newConversation.BuyerUserId,
             SellerUserId = listingSellerId,
         };
+    }
+
+    public async Task<List<ConversationResponseDto>> GetOwnConversationsAsync(string userId)
+    {
+        var conversations = await conversationRepo
+            .GetAllConversationsByUserIdAsync(userId);
+        
+        if (conversations == null)
+            throw new InvalidOperationException("Conversations not found");
+
+        var result = new List<ConversationResponseDto>();
+        
+        foreach (var conversation in conversations)
+        {
+            var listingSellerId =
+                await listingRepo.GetSellerIdAsync(conversation.ListingId);
+
+            if (listingSellerId == null)
+                throw new Exception("Listing not found");
+
+            result.Add(new ConversationResponseDto
+            {
+                Id = conversation.Id,
+                ListingId = conversation.ListingId,
+                BuyerUserId = conversation.BuyerUserId,
+                SellerUserId = listingSellerId
+            });
+        }
+        return result;
     }
 }

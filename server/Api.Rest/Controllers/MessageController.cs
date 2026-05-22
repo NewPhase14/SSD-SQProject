@@ -15,7 +15,7 @@ public class MessageController(IMessageService messageService, IJwtService jwtSe
     
     [HttpGet]
     [Route(GetMessagesRoute)]
-    public async Task<IActionResult> GetMessages(string conversationId, [FromHeader] string authorization)
+    public async Task<ActionResult<List<MessageResponseDto>>> GetMessages(string conversationId, [FromHeader] string authorization)
     {
         var jwt = jwtService.VerifyJwtOrThrow(authorization);
         if (jwt.Type != "Auth")
