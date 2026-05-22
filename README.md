@@ -2,11 +2,18 @@
  
 A secure second-hand marketplace REST API built with ASP.NET Core. Users can register, create listings, and communicate with buyers and sellers through encrypted messaging.
  
-## Features
+## Features for Secure Software Development
  
 - JWT authentication with optional Two-Factor Authentication (2FA)
 - Encrypted messaging between buyers and sellers
 - Argon2id password hashing
+- Filevalidation for uploaded images
+
+## Features for Software Quality
+
+- Cucumber tests
+- Unit tests
+- Postman collection - API tests
 
 ## About
 
