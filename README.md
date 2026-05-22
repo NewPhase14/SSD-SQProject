@@ -1,24 +1,38 @@
 # Marketplace API
  
 A secure second-hand marketplace REST API built with ASP.NET Core. Users can register, create listings, and communicate with buyers and sellers through encrypted messaging.
- 
+
 ## Features for Secure Software Development
- 
-- JWT authentication with optional Two-Factor Authentication (2FA)
-- Encrypted messaging between buyers and sellers
+
+- JWT authentication
+- Optional Two-Factor Authentication (TOTP)
 - Argon2id password hashing
-- Filevalidation for uploaded images
+- AES-GCM encrypted messaging
+- File validation for uploaded listing images
+- Authorization checks
 
 ## Features for Software Quality
 
 - Cucumber tests
 - Unit tests
-- Postman collection - API tests
+- Postman collection for API testing
 
 ## About
 
-This project is a combined exam project for the courses **Software Quality** and **Secure Software Development**. 
+This project is a combined exam project for the courses **Software Quality** and **Secure Software Development**.
 
+The API allows users to:
+
+- Register and authenticate using JWT
+- Enable Two-Factor Authentication (2FA)
+- Create and manage marketplace listings
+- Upload listing images through Cloudinary
+- Browse listings
+- Start conversations between buyers and sellers
+- Exchange AES-GCM encrypted messages inside conversations
+- Manage their user profile
+
+  
 ## Tech Stack
  
 - **Backend:** C# / ASP.NET Core
@@ -93,46 +107,54 @@ Add the following to `appsettings.json` or user secrets:
 ```
  
 ## API Endpoints
- 
+
 ### Auth
- 
+
 | Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
+|----------|----------|-------------|------|
 | POST | `/api/auth/Register` | Register a new user | No |
 | POST | `/api/auth/Login` | Login and receive JWT | No |
-| POST | `/api/auth/SetupTfa` | Enable 2FA and get QR code | JWT |
-| POST | `/api/auth/ValidateTfa` | Validate TOTP code | 2FA JWT |
- 
+| POST | `/api/auth/SetupTfa` | Enable 2FA and receive a QR code | JWT |
+| POST | `/api/auth/ValidateOtp` | Validate TOTP code and complete login | 2FA JWT |
+
+### Categories
+
+| Method | Endpoint | Description | Auth |
+|----------|----------|-------------|------|
+| GET | `/api/categoryGetCategories` | Get all available categories | No |
+
 ### Listings
- 
+
 | Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
+|----------|----------|-------------|------|
 | GET | `/api/listing/GetAll` | Get all listings | No |
-| GET | `/api/listing/GetByUser` | Get listings by user | JWT |
-| POST | `/api/listing/Create` | Create a listing | JWT |
-| PUT | `/api/listing/Update` | Update a listing | JWT |
+| GET | `/api/listing/GetListingById` | Get a listing by ID | No |
+| GET | `/api/listing/GetAllByUserId` | Get listings owned by the authenticated user | JWT |
+| POST | `/api/listing/Create` | Create a new listing with image uploads | JWT |
+| PUT | `/api/listing/Update` | Update an existing listing | JWT |
 | DELETE | `/api/listing/Delete` | Delete a listing | JWT |
- 
+
 ### Conversations
- 
+
 | Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/conversation/Create` | Start a conversation on a listing | JWT |
- 
+|----------|----------|-------------|------|
+| POST | `/api/conversation/Create` | Create or retrieve a conversation for a listing | JWT |
+| GET | `/api/conversationGetOwnConversations` | Get all conversations for the authenticated user | JWT |
+
 ### Messages
- 
+
 | Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/message/send` | Send a message | JWT |
+|----------|----------|-------------|------|
+| POST | `/api/message/send` | Send an AES-GCM encrypted message | JWT |
 | GET | `/api/message/messages` | Get messages in a conversation | JWT |
- 
+
 ### Users
- 
+
 | Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
+|----------|----------|-------------|------|
+| GET | `/api/user/GetUserByEmail` | Get the authenticated user's profile | JWT |
 | PUT | `/api/user/Update` | Update own account | JWT |
 | DELETE | `/api/user/Delete` | Delete own account | JWT |
- 
 
 ## Postman Collection
  
