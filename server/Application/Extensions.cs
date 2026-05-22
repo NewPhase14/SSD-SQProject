@@ -26,6 +26,7 @@ public static class Extensions
         services.AddScoped<ICloudinaryImageService, CloudinaryImageService>();
         services.AddScoped<IFileValidationService, FileValidationService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<ICategoryService, CategoryService>();
         
         
         //Validators

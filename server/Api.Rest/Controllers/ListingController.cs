@@ -19,6 +19,8 @@ public class ListingController(IListingService listingService, IJwtService jwtSe
     
     private const string GetAllByUserIdRoute = ControllerRoute + nameof(GetAllByUserId);
     
+    private const string GetListingByIdRoute =  ControllerRoute + nameof(GetListingById);
+    
     [HttpPost]
     [Route(CreateRoute)]
     public async Task<ActionResult<ListingResponseDto>> Create([FromForm] ListingCreateRequestDto dto, [FromHeader] string authorization)
@@ -70,4 +72,10 @@ public class ListingController(IListingService listingService, IJwtService jwtSe
         return Ok(await listingService.GetListingsByUserIdAsync(jwt.Id));
     }
     
+    [HttpGet]
+    [Route(GetListingByIdRoute)]
+    public async Task<ActionResult<ListingResponseDto>> GetListingById(string listingId)
+    {
+        return Ok(await listingService.GetListingByIdAsync(listingId));
+    }
 }

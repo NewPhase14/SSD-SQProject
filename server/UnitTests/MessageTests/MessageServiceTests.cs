@@ -77,7 +77,7 @@ public class MessageServiceTests
     {
         // Setup mocks for repositories
         _mockConversationRepo
-            .Setup(r => r.GetAsync(Conversation.Id))
+            .Setup(r => r.GetConversationAsync(Conversation.Id))
             .ReturnsAsync(Conversation);
  
         _mockListingRepo
@@ -156,7 +156,7 @@ public class MessageServiceTests
     {
         // Arrange
         _mockConversationRepo
-            .Setup(r => r.GetAsync(Conversation.Id))
+            .Setup(r => r.GetConversationAsync(Conversation.Id))
             .ReturnsAsync((Conversation?)null);
     
         // Act & Assert
@@ -214,7 +214,7 @@ public class MessageServiceTests
     {
         // Arrange
         _mockConversationRepo
-            .Setup(r => r.GetAsync(Conversation.Id))
+            .Setup(r => r.GetConversationAsync(Conversation.Id))
             .ReturnsAsync((Conversation?)null);
     
         // Act & Assert

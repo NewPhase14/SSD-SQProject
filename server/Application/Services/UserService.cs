@@ -6,6 +6,21 @@ namespace Application.Services;
 
 public class UserService(IUserRepo userRepo, IPasswordService passwordService) : IUserService
 {
+    public async Task<UserResponseDto> GetUserByEmailAsync(string email)
+    {
+        var user = await userRepo.GetUserByEmailAsync(email);
+        if (user == null) throw new InvalidOperationException("User not found");
+        
+        return new UserResponseDto
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            CreatedAt = user.CreatedAt,
+            UpdatedAt = user.UpdatedAt,
+        };
+    }
+
     public async Task<UserResponseDto> UpdateUserAsync(UserUpdateRequestDto dto, string userId)
     {
         var user = await userRepo.GetUserByIdAsync(userId);

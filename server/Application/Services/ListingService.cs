@@ -132,9 +132,9 @@ public class ListingService(IListingRepo listingRepo, ICloudinaryImageService cl
         }).ToList();
     }
 
-    public async Task<List<ListingResponseDto>> GetListingsByUserIdAsync(string id)
+    public async Task<List<ListingResponseDto>> GetListingsByUserIdAsync(string userId)
     {
-        var listings = await listingRepo.GetListingByUserIdAsync(id);
+        var listings = await listingRepo.GetListingByUserIdAsync(userId);
         return listings.Select(l => new ListingResponseDto()
         {
             Id = l.Id,
@@ -149,6 +149,29 @@ public class ListingService(IListingRepo listingRepo, ICloudinaryImageService cl
             CreatedAt = l.CreatedAt,
             UpdatedAt = l.UpdatedAt
         }).ToList();
+    }
+
+    public async Task<ListingResponseDto> GetListingByIdAsync(string listingId)
+    {
+        var listing = await listingRepo.GetListingByIdAsync(listingId);
+        
+        if (listing == null)
+            throw new InvalidOperationException("Listing not found");
+
+        return new ListingResponseDto
+        {
+            Id = listing.Id,
+            UserId = listing.UserId,
+            CategoryId = listing.CategoryId,
+            Condition = listing.Condition,
+            Title = listing.Title,
+            Description = listing.Description,
+            Price = listing.Price,
+            Status = listing.Status,
+            ImageUrls = listing.Images.Select(i => i.ImageUrl).ToList(),
+            CreatedAt = listing.CreatedAt,
+            UpdatedAt = listing.UpdatedAt
+        };
     }
 
     public async Task<ListingResponseDto> DeleteListingAsync(string listingId,  string userId)

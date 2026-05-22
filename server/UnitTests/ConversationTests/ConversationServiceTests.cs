@@ -57,7 +57,7 @@ public class ConversationServiceTests
     {
         // Arrange — conversation already exists, no new one should be created
         _mockConversationRepo
-            .Setup(r => r.GetByListingAndBuyerAsync(Listing.Id, Buyer.Id))
+            .Setup(r => r.GetConversationByListingAndBuyerAsync(Listing.Id, Buyer.Id))
             .ReturnsAsync(ExistingConversation);
     
         // Act
@@ -76,11 +76,11 @@ public class ConversationServiceTests
     {
         // Arrange — no existing conversation, so a new one should be created
         _mockConversationRepo
-            .Setup(r => r.GetByListingAndBuyerAsync(Listing.Id, Buyer.Id))
+            .Setup(r => r.GetConversationByListingAndBuyerAsync(Listing.Id, Buyer.Id))
             .ReturnsAsync((Conversation?)null);
     
         _mockConversationRepo
-            .Setup(r => r.CreateAsync(It.IsAny<Conversation>()))
+            .Setup(r => r.CreateConversationAsync(It.IsAny<Conversation>()))
             .ReturnsAsync((Conversation c) => c);
     
         // Act
@@ -93,7 +93,7 @@ public class ConversationServiceTests
         Assert.Equal(Buyer.Id, result.BuyerUserId);
         Assert.Equal(Seller.Id, result.SellerUserId);
     
-        _mockConversationRepo.Verify(r => r.CreateAsync(It.IsAny<Conversation>()), Times.Once);
+        _mockConversationRepo.Verify(r => r.CreateConversationAsync(It.IsAny<Conversation>()), Times.Once);
     }
     
     [Fact]

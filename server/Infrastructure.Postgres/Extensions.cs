@@ -23,6 +23,7 @@ public static class Extensions
         services.AddScoped<IConversationRepo, ConversationRepo>();
         services.AddScoped<IUserRepo, UserRepo>();
         services.AddScoped<IListingRepo, ListingRepo>();
+        services.AddScoped<ICategoryRepo, CategoryRepo>();
 
         return services;
     }

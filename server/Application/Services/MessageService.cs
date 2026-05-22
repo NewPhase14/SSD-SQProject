@@ -13,7 +13,7 @@ public class MessageService(IOptionsMonitor<Encryption> optionsMonitor, IMessage
     
     public async Task<MessageResponseDto> SendMessageAsync(MessageSendRequestDto dto, string userId)
     {
-        var conversation = await conversationRepo.GetAsync(dto.ConversationId);
+        var conversation = await conversationRepo.GetConversationAsync(dto.ConversationId);
 
         if (conversation == null)
             throw new Exception("Conversation not found");
@@ -52,7 +52,7 @@ public class MessageService(IOptionsMonitor<Encryption> optionsMonitor, IMessage
 
     public async Task<List<MessageResponseDto>> GetMessagesAsync(string conversationId, string userId)
     {
-        var conversation = await conversationRepo.GetAsync(conversationId);
+        var conversation = await conversationRepo.GetConversationAsync(conversationId);
         
         if (conversation == null)
             throw new Exception("Conversation not found");

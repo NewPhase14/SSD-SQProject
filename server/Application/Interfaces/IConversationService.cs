@@ -6,4 +6,5 @@ namespace Application.Interfaces;
 public interface IConversationService
 {
     Task<ConversationResponseDto> GetOrCreateConversationAsync(ConversationCreateRequestDto dto, string userId);
+    Task<List<ConversationResponseDto>> GetOwnConversationsAsync(string userId);
 }

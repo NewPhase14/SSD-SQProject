@@ -11,6 +11,8 @@ public class ConversationController(IConversationService conversationService, IJ
     
     private const string CreateConversationRoute = ControllerRoute + "/Create";
     
+    private const string GetOwnConversationsRoute = ControllerRoute + nameof(GetOwnConversations)  ;
+    
     [HttpPost]
     [Route(CreateConversationRoute)]
     public async Task<ActionResult<ConversationResponseDto>> GetOrCreateConversations([FromBody]ConversationCreateRequestDto dto, [FromHeader] string authorization)
@@ -21,4 +23,16 @@ public class ConversationController(IConversationService conversationService, IJ
         
         return Ok(await conversationService.GetOrCreateConversationAsync(dto, jwt.Id));
     }
+    
+    [HttpGet]
+    [Route(GetOwnConversationsRoute)]
+    public async Task<ActionResult<List<ConversationResponseDto>>> GetOwnConversations([FromHeader] string authorization)
+    {
+        var jwt = jwtService.VerifyJwtOrThrow(authorization);
+        if (jwt.Type != "Auth")
+            return Unauthorized();
+        
+        return Ok(await conversationService.GetOwnConversationsAsync(jwt.Id));
+    }
+    
 }
