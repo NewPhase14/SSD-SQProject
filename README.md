@@ -10,6 +10,7 @@ A secure second-hand marketplace REST API built with ASP.NET Core. Users can reg
 - AES-GCM encrypted messaging
 - File validation for uploaded listing images
 - Authorization checks
+- Using HTTPS in development 
 
 ## Features for Software Quality
 
